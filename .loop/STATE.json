@@ -1,0 +1,22 @@
+{
+  "project": "noktos-agent-backend",
+  "version": 1,
+  "status": "RUNNING",
+  "iteration": 0,
+  "current_task": null,
+  "completed_tasks": [],
+  "blocked_tasks": [],
+  "last_review": null,
+  "notes": [
+    "No tests are executed by this loop; build and full-tree layering check are the deterministic gates.",
+    "V1 is entirely in-memory. A restart loses conversations, tasks, event buffers, pending approvals and auth contexts.",
+    "NoktosClient runs against an explicitly labelled mock; noktos-auth exposes no public controllers yet.",
+    "The Supabase access token never reaches a prompt, event, task payload, log or UI.",
+    "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
+  ],
+  "reviewer_rotation": {
+    "slot": 0,
+    "last_provider": null,
+    "claude_review_every": 0
+  }
+}

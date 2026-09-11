@@ -1,0 +1,205 @@
+project: noktos-agent-backend
+version: 1
+policy:
+  tests_in_loop: false
+  reviewer_required: true
+  deterministic_build_check: true
+  layering_check: true
+  max_attempts_per_task: 2
+  final_status: READY_FOR_HUMAN_REVIEW
+
+items:
+  - id: BE-000
+    title: Bootstrap NestJS application
+    objective: Minimal compiling NestJS/TypeScript app with npm, preserving the loop harness and the frozen contracts directory.
+    risk: low
+    scope_hint: [package.json, tsconfig.json, src/main.ts, src/app.module.ts]
+    depends_on: []
+
+  - id: BE-001
+    title: Validated runtime configuration
+    objective: Centralized environment validation at startup for port, LLM provider and model, approval TTL and Noktos base URL. No process.env access outside the configuration boundary.
+    risk: medium
+    scope_hint: [src/config/, .env.example]
+    depends_on: [BE-000]
+
+  - id: BE-002
+    title: Conversation model and state
+    objective: Conversation entity, in-memory store and ConversationState holding preferences and pendingUserNotes. No routes yet.
+    risk: medium
+    scope_hint: [src/conversations/]
+    depends_on: [BE-001]
+
+  - id: BE-003
+    title: Event model and in-memory event bus
+    objective: AgentEvent envelope with monotonic per-conversation seq, in-memory bus and a bounded ring buffer per conversation for replay.
+    risk: high
+    scope_hint: [src/events/]
+    depends_on: [BE-001]
+
+  - id: BE-004
+    title: Event redaction boundary
+    objective: A single redaction function every event payload must pass through. Forbid tokens, auth handles, credentials, raw tool arguments and any reasoning or chain-of-thought field.
+    risk: critical
+    scope_hint: [src/events/]
+    depends_on: [BE-003]
+
+  - id: BE-005
+    title: SSE endpoint with resumable stream
+    objective: Stream conversation events over SSE honoring Last-Event-ID for replay from the ring buffer, authenticated through the Authorization header. No token in query strings.
+    risk: high
+    scope_hint: [src/events/, src/http/]
+    depends_on: [BE-004]
+
+  - id: BE-006
+    title: Task model and in-memory queue
+    objective: AgentTask entity, status machine, asynchronous worker and task lifecycle events.
+    risk: high
+    scope_hint: [src/tasks/]
+    depends_on: [BE-003]
+
+  - id: BE-007
+    title: Supabase auth context boundary
+    objective: Resolve a Supabase access token into a userId, hold it in an in-memory AuthContext keyed by an opaque id, and expose only that id to tasks. The raw token must never be serialized into tasks, events or logs.
+    risk: critical
+    scope_hint: [src/auth/]
+    depends_on: [BE-001]
+
+  - id: BE-008
+    title: Agent registry and descriptors
+    objective: AgentDescriptor registry with busy and idle lifecycle plus a read endpoint. No LLM behavior yet.
+    risk: medium
+    scope_hint: [src/agents/registry/, src/http/]
+    depends_on: [BE-002]
+
+  - id: BE-009
+    title: Inert tool definition registry
+    objective: Tool definitions as pure data - name, description, argument schema, actionVersion, material fields, preview mapper and an executor KEY as a string. Definitions must contain no executable side-effect code and must not import the execution layer or any outbound client. Expose ToolHandle as the only shape given to agents.
+    risk: critical
+    scope_hint: [src/tools/definitions/, src/tools/tool-registry.ts]
+    forbidden_hint: [src/execution/, src/noktos/]
+    depends_on: [BE-008]
+
+  - id: BE-010
+    title: Policy engine
+    objective: Evaluate an action plus its arguments to AUTO, HUMAN_APPROVAL_REQUIRED or FORBIDDEN. Unknown actions are FORBIDDEN by default. Policy is data, not conditionals scattered through call sites.
+    risk: critical
+    scope_hint: [src/policy/]
+    depends_on: [BE-009]
+
+  - id: BE-011
+    title: Payload canonicalization and approval hashing
+    objective: Deterministic canonical JSON and payloadHash over action, actionVersion, conversationId, taskId and the declared material fields of the action.
+    risk: critical
+    scope_hint: [src/policy/]
+    depends_on: [BE-010]
+
+  - id: BE-012
+    title: Approval engine
+    objective: ApprovalRequest lifecycle including creation, configurable TTL expiry, single-use consumption and supersede on payload mismatch. An approval is never silently reused.
+    risk: critical
+    scope_hint: [src/approvals/]
+    depends_on: [BE-011, BE-006]
+
+  - id: BE-013
+    title: Approval decision API and task resumption
+    objective: Decision endpoint with idempotency, backend-enforced ownership so only the conversation owner may decide, and task resumption or termination based on the recorded outcome.
+    risk: critical
+    scope_hint: [src/approvals/, src/http/]
+    depends_on: [BE-012, BE-007]
+
+  - id: BE-013A
+    title: Authorized execution layer
+    objective: Executor contract and executor registry resolving an executor key to an implementation. Executors are the only place permitted to import NoktosClient, and the registry must be reachable solely from the tool invoker.
+    risk: critical
+    scope_hint: [src/execution/]
+    forbidden_hint: [src/agents/, src/tools/definitions/]
+    depends_on: [BE-016]
+
+  - id: BE-014
+    title: ToolInvoker enforcement chokepoint
+    objective: The single path from an agent intent to any side effect. Fixed sequence - registry lookup, schema validation, policy evaluation, payload hashing, approval check or creation, single-use consumption, executor resolution, execution. Return awaiting_approval as a first-class outcome without performing any side effect. This is the only permitted importer of the execution layer.
+    risk: critical
+    scope_hint: [src/tools/tool-invoker.ts]
+    forbidden_hint: [src/noktos/, src/agents/]
+    depends_on: [BE-013A, BE-013]
+
+  - id: BE-015
+    title: LLM provider abstraction
+    objective: Environment-configurable provider and model abstraction with no domain logic coupled to a concrete vendor. Provider SDKs may only be imported inside this boundary.
+    risk: high
+    scope_hint: [src/llm/]
+    depends_on: [BE-001]
+
+  - id: BE-016
+    title: NoktosClient interface and mock adapter
+    objective: Stable outbound interface plus an explicitly labelled mock adapter. The mock must be obvious in logs and responses and must not simulate a real Noktos integration. Only the authorized execution layer may import it.
+    risk: high
+    scope_hint: [src/noktos/]
+    depends_on: [BE-007]
+
+  - id: BE-017
+    title: Hotel search definitions and executors
+    objective: Search tool definitions registered as AUTO plus their executors in the execution layer. Definitions and executors live in separate files and only the executor may reach the Noktos boundary.
+    risk: medium
+    scope_hint: [src/tools/definitions/, src/execution/executors/]
+    forbidden_hint: [src/agents/]
+    depends_on: [BE-016, BE-014]
+
+  - id: BE-018
+    title: Reservation definitions and executors
+    objective: add_reservation_to_cart, confirm_booking and cancel_booking as HUMAN_APPROVAL_REQUIRED definitions with declared material fields and preview allowlists, plus their executors. No execution path may reach a reservation executor without passing the invoker.
+    risk: critical
+    scope_hint: [src/tools/definitions/, src/execution/executors/]
+    forbidden_hint: [src/agents/]
+    depends_on: [BE-014, BE-016]
+
+  - id: BE-019
+    title: HotelSearchAgent
+    objective: Specialized agent with its own descriptor, prompt and lifecycle. It receives only ToolHandle metadata and the runtime; it must not import the execution layer, executors or any outbound client.
+    risk: high
+    scope_hint: [src/agents/hotel-search/]
+    forbidden_hint: [src/execution/, src/noktos/, src/tools/definitions/]
+    depends_on: [BE-017, BE-015]
+
+  - id: BE-020
+    title: SupervisorAgent
+    objective: Supervisor loop that answers directly or delegates and returns immediately without waiting for delegated work. Same import restrictions as any agent.
+    risk: high
+    scope_hint: [src/agents/supervisor/]
+    forbidden_hint: [src/execution/, src/noktos/, src/tools/definitions/]
+    depends_on: [BE-015, BE-008]
+
+  - id: BE-021
+    title: Delegation and child tasks
+    objective: Supervisor delegation creating child tasks bound to the parent conversation, with results routed back through the event bus.
+    risk: high
+    scope_hint: [src/agents/, src/tasks/]
+    depends_on: [BE-020, BE-019]
+
+  - id: BE-022
+    title: Async message endpoint
+    objective: Message endpoint returning 202 with the accepted message and created task ids, never blocking on delegated work.
+    risk: high
+    scope_hint: [src/http/, src/conversations/]
+    depends_on: [BE-021]
+
+  - id: BE-023
+    title: Concurrent conversation handling
+    objective: Accept new messages while tasks are queued, running or awaiting approval. Store new preferences in ConversationState and apply them when results arrive. Never mutate in-flight jobs.
+    risk: high
+    scope_hint: [src/conversations/, src/agents/supervisor/]
+    depends_on: [BE-022]
+
+  - id: BE-024
+    title: End-to-end demo flow and recorded fixtures
+    objective: Full search-to-approval demo plus an exported fixture set of the resulting event stream for frontend development.
+    risk: medium
+    scope_hint: [fixtures/, docs/]
+    depends_on: [BE-023, BE-018]
+
+  - id: BE-025
+    title: Human review handoff
+    objective: Review the implementation against GOAL and the frozen decisions and produce a human-review checklist stating the in-memory limitations explicitly. Every status claim must match the code as implemented.
+    risk: high
+    depends_on: [BE-024]

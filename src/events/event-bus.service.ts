@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 
 import { AgentEvent, PublishAgentEvent } from './agent-event';
+import { redactEventPayload } from './event-redactor';
 
 export const DEFAULT_EVENT_BUFFER_CAPACITY = 100;
 
@@ -27,12 +28,18 @@ export class EventBusService {
   }
 
   publish<TPayload>(input: PublishAgentEvent<TPayload>): AgentEvent<TPayload> {
+    const sanitizedPayload = redactEventPayload(input.type, input.payload);
     const seq = this.nextSequences.get(input.conversationId) ?? 1;
     const event: AgentEvent<TPayload> = {
-      ...structuredClone(input),
       id: randomUUID(),
       seq,
+      type: input.type,
+      conversationId: input.conversationId,
+      ...(input.taskId === undefined ? {} : { taskId: input.taskId }),
+      ...(input.agentName === undefined ? {} : { agentName: input.agentName }),
+      correlationId: input.correlationId,
       occurredAt: new Date().toISOString(),
+      payload: sanitizedPayload,
     };
 
     this.nextSequences.set(input.conversationId, seq + 1);

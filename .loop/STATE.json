@@ -2,20 +2,21 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 4,
+  "iteration": 5,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
     "BE-001-01",
     "BE-002-01",
-    "BE-003-01"
+    "BE-003-01",
+    "BE-004-01"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-003-01",
+    "task_id": "BE-004-01",
     "verdict": "approve",
-    "summary": "The change meets BE-003-01 acceptance criteria. It adds a process-local event bus with bus-assigned UUIDs, timestamps, independent monotonic conversation sequences, bounded per-conversation replay buffers, scoped subscriptions with unsubscribe, defensive cloning, and NestJS module integration. The diff is complete, confined to allowed paths, structurally matches the frozen event contract, and deterministic build and layering checks passed.",
-    "reviewed_at": "2026-09-11T17:41:22Z",
+    "summary": "The change satisfies BE-004-01. EventBusService redacts every payload before constructing, buffering, notifying, or returning the event. General payloads are deeply copied with recursive, case- and separator-insensitive forbidden-key removal, while tool.called payloads are projected to the frozen action/argsPreview allowlist. The diff is complete, confined to allowed paths, introduces no prohibited architecture changes, and deterministic build and layering verification passed.",
+    "reviewed_at": "2026-09-11T17:53:10Z",
     "provider": "codex"
   },
   "notes": [
@@ -26,7 +27,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 4,
+    "slot": 5,
     "last_provider": "codex",
     "claude_review_every": 0
   }

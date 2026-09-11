@@ -2,11 +2,19 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 0,
+  "iteration": 1,
   "current_task": null,
-  "completed_tasks": [],
+  "completed_tasks": [
+    "BE-000-01"
+  ],
   "blocked_tasks": [],
-  "last_review": null,
+  "last_review": {
+    "task_id": "BE-000-01",
+    "verdict": "approve",
+    "summary": "The minimal NestJS/TypeScript skeleton meets the task acceptance criteria. All changes are confined to allowed paths, the application boots an empty AppModule on a fixed port without process.env access, dependencies and lockfile are consistent, and deterministic build and full-tree layering verification passed.",
+    "reviewed_at": "2026-09-11T16:53:26Z",
+    "provider": "codex"
+  },
   "notes": [
     "No tests are executed by this loop; build and full-tree layering check are the deterministic gates.",
     "V1 is entirely in-memory. A restart loses conversations, tasks, event buffers, pending approvals and auth contexts.",
@@ -15,8 +23,8 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 0,
-    "last_provider": null,
+    "slot": 1,
+    "last_provider": "codex",
     "claude_review_every": 0
   }
 }

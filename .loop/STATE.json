@@ -2,21 +2,22 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 5,
+  "iteration": 6,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
     "BE-001-01",
     "BE-002-01",
     "BE-003-01",
-    "BE-004-01"
+    "BE-004-01",
+    "BE-006-01"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-004-01",
+    "task_id": "BE-006-01",
     "verdict": "approve",
-    "summary": "The change satisfies BE-004-01. EventBusService redacts every payload before constructing, buffering, notifying, or returning the event. General payloads are deeply copied with recursive, case- and separator-insensitive forbidden-key removal, while tool.called payloads are projected to the frozen action/argsPreview allowlist. The diff is complete, confined to allowed paths, introduces no prohibited architecture changes, and deterministic build and layering verification passed.",
-    "reviewed_at": "2026-09-11T17:53:10Z",
+    "summary": "The implementation meets BE-006-01 acceptance criteria and architecture constraints. It adds a contract-compatible in-memory task model, centralized legal transitions, defensive copying, asynchronous FIFO processing with duplicate-scheduling protection, sanitized failure handling, minimal lifecycle events, and NestJS module wiring. The diff is confined to allowed paths, does not modify contracts or introduce forbidden integrations, and deterministic verification reports a successful TypeScript build and full-tree layering check.",
+    "reviewed_at": "2026-09-11T18:12:02Z",
     "provider": "codex"
   },
   "notes": [
@@ -27,7 +28,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 5,
+    "slot": 6,
     "last_provider": "codex",
     "claude_review_every": 0
   }

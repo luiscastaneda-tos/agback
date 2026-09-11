@@ -149,6 +149,104 @@ Changing a contract is a human operation: stop both loops, edit here, bump
 `contracts/VERSION`, re-vendor, record the decision in both repositories,
 commit separately, resume.
 
+## D-018 - Supabase JWT verification and AuthContext credential retention (V1)
+
+Frozen by the human while resolving the BE-007 HUMAN_GATE, after D-001..D-017.
+Extends D-009, which froze what happens to the token but not how it is verified
+or what is retained.
+
+### Verification
+
+The Agent Backend verifies Supabase-issued access tokens LOCALLY against the
+Supabase JWKS. It does not call the Supabase Auth endpoint per request.
+
+Required configuration is exclusively non-secret, documented in `.env.example`
+with no real values:
+
+```text
+SUPABASE_JWKS_URL
+SUPABASE_JWT_ISSUER
+SUPABASE_JWT_AUDIENCE
+```
+
+No Supabase API key is required for this mechanism. `SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY` and `service_role` must NOT be introduced as a
+requirement of BE-007.
+
+The shared Supabase `JWT_SECRET` must never be copied into or used by this
+backend.
+
+Validation must require, at minimum:
+
+- a valid signature against JWKS
+- an exact issuer match
+- an exact audience match
+- a valid `exp`
+- a `sub` that is present and non-empty
+
+Expired tokens, invalid signatures, wrong issuer or audience, unknown keys and
+an invalid JWKS must all FAIL CLOSED and must not create an AuthContext.
+Unsigned JWTs are never accepted.
+
+This local-JWKS mechanism is implemented only if the existing Supabase project
+uses asymmetric signing keys compatible with JWKS. If that cannot be confirmed,
+raise a HUMAN_GATE. A silent fallback is forbidden.
+
+Verification is encapsulated behind an `AuthTokenVerifier` interface, so a
+future server-side strategy such as `supabase.auth.getUser(token)` can replace
+`JwksTokenVerifier` without affecting tasks, SSE, approvals or executors.
+
+### AuthContext
+
+Once the JWT is validated, the backend creates an opaque `authContextId`.
+Conceptually the in-memory store retains:
+
+```text
+AuthContext
+- userId
+- accessToken
+- expiresAt
+```
+
+`userId` comes from the verified `sub` of the JWT.
+
+The raw access token may be held ONLY in process memory and ONLY until it
+expires, because executors later need to call Noktos on behalf of the user.
+
+The token is forbidden from appearing in:
+
+- task payloads
+- serializable conversation state
+- prompts or any context sent to the LLM
+- operational events / SSE
+- logs
+- errors
+- the UI
+- URLs
+- files
+- persistent storage
+
+Tasks and every other component carry exclusively the opaque `authContextId`.
+The token may cross the auth boundary only when the runtime creates an ephemeral
+`ExecutionContext` for an authorized execution.
+
+### Expiry
+
+No refresh tokens are stored. No automatic refresh in V1.
+
+An expired AuthContext must produce `AUTH_CONTEXT_EXPIRED` and must never
+attempt execution with the expired credential. The application then requires
+authentication again. Expired AuthContexts are invalid and must be evictable
+from the store.
+
+### Structural security
+
+No agent and no LLM ever receives the access token.
+
+`authContextId` must not appear in operational events or the UI either, unless
+an explicitly approved technical need arises; use task and conversation ids for
+public correlation.
+
 ## OPEN - escalate, never invent
 
 ### Q-001 - Durable persistence and retention

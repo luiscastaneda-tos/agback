@@ -1120,6 +1120,25 @@ while [ "$iteration" -le "$MAX_ITERATIONS" ]; do
     if [ "$worker_status" = "human_gate" ] || [ "$worker_status" = "blocked" ]; then
       write_human_gate "$(jq_run -r '.summary // ""' "$worker_out")" \
         "$(jq_run -c '.questions // []' "$worker_out")" "$run_dir"
+      # A gate caused purely by a dependency the sandbox cannot install is an
+      # environment problem, not a decision for a human. Try once per task to
+      # provision it from the host; every other gate is surfaced unchanged.
+      if [ "${PROVISION_DEPENDENCIES:-1}" -eq 1 ] && [ -n "${task_id:-}" ]; then
+        provision_marker="$RUNS_ROOT/.provisioned-$task_id"
+        if [ ! -f "$provision_marker" ]; then
+          echo "[noktos-loop] Gate raised; checking whether it is dependency provisioning..."
+          if bash "$REPO_ROOT/.loop/scripts/provision-dependencies.sh" \
+               --run-dir "$run_dir" --baseline-head "$base_head"; then
+            : > "$provision_marker"
+            rm -f "$REPO_ROOT/.loop/HUMAN_GATE.md"
+            echo "[noktos-loop] Dependencies provisioned from the host. Retrying $task_id with fresh agents."
+            continue
+          fi
+          echo "[noktos-loop] Not a provisioning case; the gate stands."
+        else
+          echo "[noktos-loop] $task_id was already provisioned once; not retrying."
+        fi
+      fi
       exit 5
     fi
 

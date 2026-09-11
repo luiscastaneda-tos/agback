@@ -73,7 +73,8 @@ for path in \
   ".loop/scripts/loop.sh" \
   ".loop/scripts/verify.sh" \
   ".loop/scripts/loop.config.sh" \
-  ".loop/scripts/check-layering.sh"
+  ".loop/scripts/check-layering.sh" \
+  ".loop/scripts/provision-dependencies.sh"
 do
   [ -f "$path" ] || die "Missing required loop file: $path"
   echo "[ok] $path"

@@ -54,3 +54,9 @@
 # Upper bound on lines written into the precomputed diff.patch handed to the
 # reviewer. Keeps a runaway diff from burning the review budget.
 : "${DIFF_MAX_LINES:=4000}"
+
+# Host-side dependency provisioning. When an implementer gates because the
+# sandbox cannot install a package the Architect authorised, the host installs
+# it, discards the unapproved diff and the task is retried once with fresh
+# agents. Set to 0 to disable and surface every dependency gate to a human.
+PROVISION_DEPENDENCIES=${PROVISION_DEPENDENCIES:-1}

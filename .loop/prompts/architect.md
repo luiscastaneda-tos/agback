@@ -87,6 +87,17 @@ For early bootstrap tasks that must create root-level files, list them exactly
 to express "the whole repository". .loop protected files remain forbidden to the
 worker regardless of what allowed_paths says.
 
+
+DEPENDENCY AUTHORISATION (STRICT):
+`allowed_dependencies` is REQUIRED on every task. It lists the npm package names
+this task may add to package.json. Use `[]` when the task needs no new package.
+
+The harness will refuse to provision any dependency that is not listed here, even
+if the implementer declares it, and will stop with a HUMAN_GATE instead. Listing a
+package is an authorisation, so list only what the task genuinely requires, and
+prefer the Node standard library when it suffices.
+
+Do not list a package merely because it might be convenient later.
 If all backlog goals are implemented, return complete. Final status is READY_FOR_HUMAN_REVIEW, never production-ready.
 
 Return only structured output matching the supplied schema.

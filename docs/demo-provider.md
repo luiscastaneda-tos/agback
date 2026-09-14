@@ -24,7 +24,7 @@ with no surrounding whitespace). System prompts do not select scenarios.
 | `demo:greeting` | Fixed fictional greeting, no calls |
 | `demo:clarification` | Fixed scenario clarification, no calls |
 | `demo:hotel-delegation` | `delegate_to_hotel_search({ goal: 'demo:hotel-search' })` |
-| `demo:hotel-search` | `search_hotels({ destination: 'Fictional Demo City' })` |
+| `demo:hotel-search` | `search_hotels({ destination: 'Demo Harbor' })` |
 | `demo:add-reservation-to-cart` | `add_reservation_to_cart` with fixed fictional reservation arguments |
 | `demo:confirm-booking` | `confirm_booking` with fixed fictional cart arguments |
 | `demo:cancel-booking` | `cancel_booking` with fixed fictional booking arguments |

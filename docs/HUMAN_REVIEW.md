@@ -269,7 +269,7 @@ These are source observations for human assessment, not fixes or new policy.
 | Additional operational coverage absent | `tool.called`/`tool.completed` occur in event types/redactor but no publishing call was found in `src/`. Agent lifecycle events are also not established merely by having a descriptor/provider loop. Review observable lifecycle coverage against GOAL rather than inferring it from the event union. |
 | Pending notes are retained | MessageSubmissionService creates separate follow-up tasks, but no reader that applies/clears `pendingUserNotes` on child result was found. Do not claim result-driven note reconciliation; the implemented path is separate task submission. |
 | Expiry is not a timer-driven event | ApprovalStore expires pending entries on access; approved-but-expired requests fail consumption without becoming expired there. D-023's expiry event coverage needs review. SSE authenticates on connection; the controller has no ongoing token-expiry closure timer. Do not claim continuous reauthentication. |
-| Demo search can return zero hotels | Scripted destination `Fictional Demo City` does not match the mock's `Demo Harbor`/`Demo Valley` entries. Completion demonstrates delegation, not a nonempty hotel result or live availability. |
+| Demo search destination corrected in source | `demo:hotel-search` now requests `Demo Harbor`, matching the mock catalog destination. Source inspection indicates two expected fictional matches: Mock Lantern House and Mock Cloud Garden. Authenticated runtime verification remains pending; this correction does not establish live availability. |
 
 - [ ] Review and disposition each finding with the architect/human; do not
   silently invent security, retention, integration or public-contract decisions.

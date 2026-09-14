@@ -32,7 +32,7 @@ export class DemoScriptedLlmProvider implements LlmProvider {
       case 'demo:hotel-search':
         call = {
           id: 'demo-search-1', name: 'search_hotels',
-          arguments: { destination: 'Fictional Demo City' },
+          arguments: { destination: 'Demo Harbor' },
         };
         break;
       case 'demo:add-reservation-to-cart':

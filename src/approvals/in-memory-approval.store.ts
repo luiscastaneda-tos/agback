@@ -5,6 +5,7 @@ import type {
   ApprovalRequest,
   CreateApprovalRequestInput,
   RecordApprovalDecisionInput,
+  SupersedeApprovalOnMismatchResult,
 } from './approval-request';
 
 /** Process-local approval storage; this store grants no execution authority. */
@@ -26,6 +27,13 @@ export class InMemoryApprovalStore {
   }
 
   create(input: CreateApprovalRequestInput): ApprovalRequest {
+    const stored = this.prepareRequest(input);
+    const snapshot = structuredClone(stored);
+    this.requests.set(stored.id, stored);
+    return snapshot;
+  }
+
+  private prepareRequest(input: CreateApprovalRequestInput): ApprovalRequest {
     const now = Date.now();
     const expiresAt = new Date(now + this.approvalTtlMs);
     if (!Number.isFinite(expiresAt.getTime())) {
@@ -52,9 +60,7 @@ export class InMemoryApprovalStore {
       expiresAt: expiresAt.toISOString(),
     };
 
-    const stored = structuredClone(request);
-    this.requests.set(stored.id, stored);
-    return this.read(stored);
+    return structuredClone(request);
   }
 
   findById(id: string): ApprovalRequest | undefined {
@@ -108,6 +114,40 @@ export class InMemoryApprovalStore {
 
     this.consumedApprovalIds.add(approvalId);
     return true;
+  }
+
+  /**
+   * Accepts a trusted, already-computed replacement hash without recomputing it.
+   * Preparation and detached snapshots precede the synchronous transition.
+   * No decision metadata is changed and no execution authority is granted.
+   */
+  supersedeOnMismatch(
+    approvalId: string,
+    input: CreateApprovalRequestInput,
+  ): SupersedeApprovalOnMismatchResult {
+    const original = this.requests.get(approvalId);
+    if (
+      original === undefined ||
+      (original.status !== 'pending' && original.status !== 'approved') ||
+      !(Date.parse(original.expiresAt) > Date.now()) ||
+      this.consumedApprovalIds.has(approvalId) ||
+      original.payloadHash === input.payloadHash ||
+      original.conversationId !== input.conversationId ||
+      original.taskId !== input.taskId
+    ) {
+      return { kind: 'not_replaced' };
+    }
+
+    const replacement = this.prepareRequest(input);
+    const result: SupersedeApprovalOnMismatchResult = {
+      kind: 'replaced',
+      original: structuredClone({ ...original, status: 'superseded' }),
+      replacement: structuredClone(replacement),
+    };
+
+    original.status = 'superseded';
+    this.requests.set(replacement.id, replacement);
+    return result;
   }
 
   private read(request: ApprovalRequest): ApprovalRequest {

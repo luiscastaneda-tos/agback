@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 15,
+  "iteration": 16,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -19,14 +19,15 @@
     "BE-011-01",
     "BE-012-01",
     "BE-012-02",
-    "BE-012-03"
+    "BE-012-03",
+    "BE-012-04"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-012-03",
+    "task_id": "BE-012-04",
     "verdict": "approve",
-    "summary": "BE-012-03 meets acceptance criteria. Consumption is synchronous, hash-bound, expiry-enforced and single-use, with private process-local bookkeeping. Failed attempts preserve eligibility, and existing snapshots and decision metadata remain unchanged. The diff stays within scope and preserves architecture boundaries. Harness build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T16:41:53Z",
+    "summary": "BE-012-04 meets acceptance criteria and architecture requirements. Supersession checks eligibility and binding, prepares detached snapshots before mutation, preserves audit metadata, and creates one pending replacement with configured TTL. Only allowed files changed. Harness build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T16:44:00Z",
     "provider": "codex"
   },
   "notes": [
@@ -37,7 +38,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 15,
+    "slot": 16,
     "last_provider": "codex",
     "claude_review_every": 0
   }

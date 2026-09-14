@@ -43,6 +43,15 @@ export interface CreateApprovalRequestInput {
   payloadHash: string;
 }
 
+/** Internal outcome; replacement requires the caller to pause for approval. */
+export type SupersedeApprovalOnMismatchResult =
+  | {
+      kind: 'replaced';
+      original: ApprovalRequest;
+      replacement: ApprovalRequest;
+    }
+  | { kind: 'not_replaced' };
+
 /** Internal storage input; HTTP idempotency is handled outside this store. */
 export interface RecordApprovalDecisionInput {
   approvalId: string;

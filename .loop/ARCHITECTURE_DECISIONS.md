@@ -739,6 +739,51 @@ The human review guide produced in `BE-025` must document the precise step-by-st
 - Pending `.sse` files must not be manually fabricated or artificially generated in the codebase.
 - If fixtures captured during human review are subsequently committed, they must first be inspected to confirm they are completely sanitized.
 
+## D-025 - GET /conversations/:id/tasks endpoint and task wire projection (V1)
+
+Recorded while resolving the handoff HUMAN_GATE on 2026-09-14.
+Reconciles the frozen contract requirements (`contracts/http.md` and `contracts/task.ts` v1.0.0) with D-018 by explicitly approving the technical need for `authContextId` in the public `AgentTask` wire representation.
+
+### 1. Context & Technical Need Exception
+- Frozen contract `contracts/http.md` specifies `GET /conversations/:id/tasks -> 200 AgentTask[]`.
+- Frozen contract `contracts/task.ts` defines `AgentTask` with required field `authContextId: UUID`.
+- In `noktos-agent-frontend`, `HttpTransport.ts` strictly validates that each returned task contains `authContextId`.
+- Furthermore, the frontend chat projection (`createConversationTasksController`) relies on `GET /conversations/:id/tasks` snapshots to project assistant responses when tasks complete.
+- D-018 states: "`authContextId` must not appear in operational events or the UI either, unless an explicitly approved technical need arises; use task and conversation ids for public correlation."
+- Under D-025, the technical need to satisfy the frozen 1.0.0 contract and enable frontend task snapshot projection is explicitly approved.
+
+### 2. Security & Privacy Guarantees
+- `authContextId` is strictly an opaque server-side handle (UUID/hex). It is NOT an access token, API key, credential, or sensitive traveler PII.
+- The raw Supabase access token NEVER appears in the task entity, task wire projection, logs, events, prompts, or UI.
+- The frontend never renders `authContextId` to the user; it is handled strictly as an internal opaque identifier in the transport layer.
+
+### 3. Implementation Specification
+- Endpoint: `GET /conversations/:id/tasks`
+- Controller: `ConversationTasksController` in `src/http/conversation-tasks.controller.ts`, registered in `HttpModule`.
+- Security & Guards: Decorated with `@UseGuards(BearerAuthGuard)`.
+- Ownership Authorization: Only the verified owner of the conversation (`conversation.userId === identity.userId`) may retrieve tasks for that conversation. If the conversation does not exist or belongs to another user, return 404 `CONVERSATION_NOT_FOUND` (consistent with `ConversationApprovalsController` and `ConversationMessagesController`).
+- Data Retrieval: Fetch tasks from `InMemoryTaskStore.listByConversation(conversationId)`.
+- Wire Projection: Project each task to the exact `AgentTask` shape defined in `contracts/task.ts`:
+  - `id`: task.id
+  - `conversationId`: task.conversationId
+  - `parentTaskId`: task.parentTaskId (if defined)
+  - `agentName`: task.agentName
+  - `goal`: task.goal
+  - `status`: task.status
+  - `authContextId`: task.authContextId
+  - `createdAt`: task.createdAt
+  - `startedAt`: task.startedAt (if defined)
+  - `finishedAt`: task.finishedAt (if defined)
+  - `result`: task.result (if defined)
+  - `failure`: task.failure (if defined)
+  - `activeApprovalId`: task.activeApprovalId (if defined)
+- Error envelope: Standard `{ error: { code, message, requestId } }`.
+
+### 4. Harness & Execution
+- Root `contracts/` remains frozen at 1.0.0.
+- The Architect is authorized to dispatch a focused task (e.g. `BE-025-09`) with allowed paths: `src/http/conversation-tasks.controller.ts`, `src/http/http.module.ts`.
+- Once implemented and approved, the loop will transition to `READY_FOR_HUMAN_REVIEW`.
+
 ## OPEN - escalate, never invent
 
 ### Q-001 - Durable persistence and retention

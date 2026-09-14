@@ -53,8 +53,8 @@ only history after the latest user message; no shared conversation state exists.
 Reservation calls remain subject to schema validation, policy and mandatory
 human approval through the existing runtime chokepoint. This provider neither
 grants approval nor claims execution. SupervisorAgent offers delegation and the
-registered `add_reservation_to_cart` handle through AgentRuntime. HotelSearchAgent remains search-only. Confirmation
-and cancellation handles are not offered by either agent.
+registered `add_reservation_to_cart` and `confirm_booking` handles through
+AgentRuntime. HotelSearchAgent remains search-only. Neither agent offers cancellation.
 
 `AppModule` imports `AgentRuntimeModule`, which registers both agent descriptors
 and their existing task processors during initialization, before HTTP traffic is
@@ -118,8 +118,43 @@ Use `"decision": "reject"` with its own idempotency key to decline an approval;
 rejection does not authorize or resume cart execution. Changes to material
 arguments require a replacement approval under the existing runtime checks.
 
-Confirmation and cancellation remain provider intent examples with their message
-flows pending. Recorded runtime SSE fixtures are also pending; future fixtures
+To run the implemented confirmation flow, use the same authenticated conversation
+owner and endpoints as above:
+
+1. Submit to `POST /conversations/:id/messages`:
+
+   ```json
+   { "content": "demo:confirm-booking", "clientMessageId": "00000000-0000-4000-8000-000000000005" }
+   ```
+
+   This scenario uses standalone synthetic cart input `fictional-cart-item-1`,
+   fictional traveler `fictional-traveler-1` / `Fictional Demo Traveler`, and
+   200 MXN. It does not use the preceding cart result or require that scenario.
+2. After the 202 response, observe SSE or the tasks and approvals endpoints.
+   The task pauses as `awaiting_human_approval`; review the confirmation preview,
+   including the cart item, traveler and total to pay. No booking is confirmed yet.
+3. As the owner, submit to `POST /approvals/:id/decision` with this pending
+   confirmation approval ID:
+
+   ```json
+   { "decision": "approve", "idempotencyKey": "00000000-0000-4000-8000-000000000006" }
+   ```
+
+   Reuse the same key for retries. Approval automatically requeues the paused
+   task once, preserving its active approval ID; no manual resume is needed.
+4. The resumed processor passes that ID through AgentRuntime to ToolInvoker.
+   Existing approval binding, material fields, expiry and single-use checks
+   precede executor dispatch. Only a completed, validated confirmation outcome
+   yields `{ "mock": true, "bookingId": "<synthetic ID>", "status": "confirmed" }`
+   in the task result, with a fictional mock summary. Provider text never supplies
+   confirmation success. Observe completion over SSE or the tasks endpoint.
+
+Rejecting the confirmation with `"decision": "reject"` and its own idempotency
+key does not resume execution. Changed material arguments require a replacement
+approval; authentication expiry remains `AUTH_CONTEXT_EXPIRED` and requires
+authentication again.
+
+Cancellation remains a provider intent example with its message flow pending. Recorded runtime SSE fixtures are also pending; future fixtures
 must be captured from actual runtime execution, never fabricated.
 Everything described here is fictional demo behavior, with no production
 readiness claim.

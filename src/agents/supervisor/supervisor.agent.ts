@@ -7,6 +7,7 @@ import type { ToolHandle } from '../../tools/tool-handle';
 import type { AgentDescriptor } from '../agent-descriptor';
 
 const CART_TOOL = 'add_reservation_to_cart';
+const CONFIRM_TOOL = 'confirm_booking';
 
 const DELEGATION_INTENT = 'delegate_to_hotel_search';
 
@@ -20,7 +21,9 @@ work has completed. Clearly label hotel assistance as fictional mock data;
 never claim live availability or real bookings. Use add_reservation_to_cart
 to request adding a fictional reservation to the cart.
 This requires owner approval before execution; never claim cart success while
-approval is pending. Do not confirm or cancel bookings. Do not request other
+approval is pending. Use confirm_booking to request fictional booking confirmation,
+which also requires owner approval before execution. Claim confirmation only after
+a completed, validated tool result. Do not cancel bookings. Do not request other
 agents or tools.`;
 
 const delegationArgsSchema = z.strictObject({
@@ -42,9 +45,16 @@ const cartResultSchema = z.object({
   status: z.literal('added'),
 });
 
+const confirmationResultSchema = z.object({
+  mock: z.literal(true),
+  bookingId: z.string().min(1).regex(/\S/),
+  status: z.literal('confirmed'),
+});
+
 /** Internal decisions only; orchestration owns task creation and lifecycle. */
 export type SupervisorAgentOutcome =
   | { kind: 'completed'; text: string }
+  | { kind: 'confirmation_completed'; data: z.infer<typeof confirmationResultSchema> }
   | { kind: 'cart_completed'; data: z.infer<typeof cartResultSchema> }
   | { kind: 'stopped'; outcome: Exclude<ToolOutcome, { kind: 'completed' }> }
   | { kind: 'delegated'; agentName: 'HotelSearchAgent'; goal: string }
@@ -62,6 +72,7 @@ export class SupervisorAgent {
     private readonly provider: LlmProvider,
     private readonly model: string,
     private readonly cartHandle: ToolHandle,
+    private readonly confirmationHandle: ToolHandle,
     private readonly runtime: AgentRuntime,
   ) {}
 
@@ -70,10 +81,10 @@ export class SupervisorAgent {
     return {
       name: 'SupervisorAgent',
       displayName: 'Supervisor',
-      description: 'Answers questions, delegates mock hotel searches, or requests approval for fictional cart additions.',
+      description: 'Answers questions, delegates mock hotel searches, or requests approval for fictional cart additions and booking confirmations.',
       kind: 'supervisor',
       // Delegation is orchestration metadata, not a registered business tool.
-      toolNames: [CART_TOOL],
+      toolNames: [CART_TOOL, CONFIRM_TOOL],
       status: 'idle',
     };
   }
@@ -81,7 +92,8 @@ export class SupervisorAgent {
   async run(goal: string, context: ToolContext): Promise<SupervisorAgentOutcome> {
     if (typeof goal !== 'string' || !goal.trim()
       || typeof this.model !== 'string' || !this.model.trim()
-      || this.cartHandle.name !== CART_TOOL) {
+      || this.cartHandle.name !== CART_TOOL
+      || this.confirmationHandle.name !== CONFIRM_TOOL) {
       return { kind: 'failed', code: 'INVALID_INPUT' };
     }
 
@@ -101,6 +113,10 @@ export class SupervisorAgent {
           name: CART_TOOL,
           description: this.cartHandle.description,
           argsSchema: structuredClone(this.cartHandle.argsSchema),
+        }, {
+          name: CONFIRM_TOOL,
+          description: this.confirmationHandle.description,
+          argsSchema: structuredClone(this.confirmationHandle.argsSchema),
         }],
       });
     } catch {
@@ -119,15 +135,27 @@ export class SupervisorAgent {
           ? { kind: 'completed', text: output.text }
           : { kind: 'failed', code: 'MALFORMED_OUTPUT' };
       }
-      if (call.name === CART_TOOL) {
+      if (call.name === CART_TOOL || call.name === CONFIRM_TOOL) {
         try {
-          const outcome = await this.runtime.invoke(CART_TOOL, call.arguments, context);
+          const outcome = await this.runtime.invoke(call.name, call.arguments, context);
           switch (outcome.kind) {
             case 'awaiting_approval':
             case 'rejected':
             case 'forbidden':
               return { kind: 'stopped', outcome };
             case 'completed': {
+              if (call.name === CONFIRM_TOOL) {
+                const result = confirmationResultSchema.safeParse(outcome.data);
+                if (!result.success) return { kind: 'failed', code: 'TOOL_FAILED' };
+                return {
+                  kind: 'confirmation_completed',
+                  data: {
+                    mock: result.data.mock,
+                    bookingId: result.data.bookingId,
+                    status: result.data.status,
+                  },
+                };
+              }
               const result = cartResultSchema.safeParse(outcome.data);
               if (!result.success) return { kind: 'failed', code: 'TOOL_FAILED' };
               return {

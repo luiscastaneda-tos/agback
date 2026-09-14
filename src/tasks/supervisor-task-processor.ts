@@ -60,6 +60,19 @@ export class SupervisorTaskProcessor implements TaskProcessor {
               summary: 'Fictional mock reservation added to the cart after owner approval.',
             },
           };
+        case 'confirmation_completed':
+          return {
+            kind: 'completed',
+            result: {
+              kind: 'answer',
+              data: {
+                mock: outcome.data.mock,
+                bookingId: outcome.data.bookingId,
+                status: outcome.data.status,
+              },
+              summary: 'Fictional mock booking confirmed after owner approval.',
+            },
+          };
         case 'stopped':
           switch (outcome.outcome.kind) {
             case 'awaiting_approval':
@@ -69,11 +82,11 @@ export class SupervisorTaskProcessor implements TaskProcessor {
               };
             case 'rejected':
               return { kind: 'failed', failure: {
-                code: 'APPROVAL_REJECTED', message: 'Cart action was rejected.',
+                code: 'APPROVAL_REJECTED', message: 'Reservation action was rejected.',
               } };
             case 'forbidden':
               return { kind: 'failed', failure: {
-                code: 'POLICY_FORBIDDEN', message: 'Cart action is forbidden by policy.',
+                code: 'POLICY_FORBIDDEN', message: 'Reservation action is forbidden by policy.',
               } };
             default:
               return this.failure();
@@ -102,7 +115,7 @@ export class SupervisorTaskProcessor implements TaskProcessor {
           }
           if (outcome.code === 'TOOL_FAILED') {
             return { kind: 'failed', failure: {
-              code: 'TOOL_ERROR', message: 'Cart invocation failed.',
+              code: 'TOOL_ERROR', message: 'Reservation tool invocation failed.',
             } };
           }
           return this.failure();

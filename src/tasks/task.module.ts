@@ -16,6 +16,6 @@ import { TaskService } from './task.service';
     TaskQueueService,
     TaskDelegationService,
   ],
-  exports: [TaskProcessorRegistry, TaskService, TaskQueueService, TaskDelegationService],
+  exports: [TaskProcessorRegistry, TaskService, TaskQueueService, TaskDelegationService, InMemoryTaskStore],
 })
 export class TaskModule {}

@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 61,
+  "iteration": 62,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -65,14 +65,15 @@
     "BE-025-05",
     "BE-025-06",
     "BE-025-07",
-    "BE-025-08"
+    "BE-025-08",
+    "BE-025-09"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-025-08",
+    "task_id": "BE-025-09",
     "verdict": "approve",
-    "summary": "BE-025-08 meets the acceptance criteria and architecture requirements. Changes stay within the three allowed files, preserve approval handling and task outcomes, and publish lifecycle events with empty payloads through EventBusService. Harness build and full-tree layering checks passed. Human runtime verification remains pending under D-024.",
-    "reviewed_at": "2026-09-14T20:57:22Z",
+    "summary": "BE-025-09 meets the task and architecture requirements. Ownership checks precede retrieval, the explicit projection matches the frozen contract and D-025, and module wiring shares the existing task store. Changes remain within allowed paths. Harness build and full-tree layering checks passed; authenticated runtime verification remains deferred to human review.",
+    "reviewed_at": "2026-09-14T21:03:17Z",
     "provider": "codex"
   },
   "notes": [
@@ -83,7 +84,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 63,
+    "slot": 64,
     "last_provider": "codex",
     "claude_review_every": 0
   }

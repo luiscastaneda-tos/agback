@@ -4,7 +4,7 @@ import type { AuthContextService, ExecutionCredentialResolver } from '../auth/au
 import { AuthenticationFailure } from '../auth/auth-token-verifier';
 import type { InMemoryConversationStore } from '../conversations/in-memory-conversation.store';
 import type { ExecutionContext } from '../execution/execution-context';
-import type { ExecutorRegistry } from '../execution/executor-registry';
+import { ExecutorRegistry } from '../execution/executor-registry';
 import { payloadHash } from '../policy/payload-hash';
 import type { PolicyEngine } from '../policy/policy-engine';
 import type { TaskService } from '../tasks/task.service';
@@ -13,6 +13,22 @@ import { ToolInvocationFailure } from './agent-runtime';
 import type { ToolRegistry } from './tool-registry';
 
 export { ToolInvocationFailure } from './agent-runtime';
+
+/** Application composition only; construction does not perform an invocation. */
+export function createToolInvoker(
+  tools: ToolRegistry,
+  policy: PolicyEngine,
+  approvals: InMemoryApprovalStore,
+  tasks: TaskService,
+  conversations: InMemoryConversationStore,
+  authContexts: AuthContextService,
+  credentials: ExecutionCredentialResolver,
+): ToolInvoker {
+  return new ToolInvoker(
+    tools, policy, approvals, tasks, conversations, authContexts, credentials,
+    new ExecutorRegistry(),
+  );
+}
 
 /** Sole execution seam. Never pass its service dependencies to agents. */
 export class ToolInvoker implements AgentRuntime {

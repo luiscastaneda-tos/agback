@@ -37,6 +37,16 @@ export class InMemoryTaskStore {
       .map((task) => structuredClone(task));
   }
 
+  /** Clear only the binding validated by the invoker, without changing status. */
+  clearActiveApproval(taskId: string, expectedApprovalId: string): boolean {
+    const task = this.tasks.get(taskId);
+    if (task === undefined || task.activeApprovalId !== expectedApprovalId) {
+      return false;
+    }
+    delete task.activeApprovalId;
+    return true;
+  }
+
   transition(taskId: string, transition: TaskTransition): AgentTask {
     const retained = this.tasks.get(taskId);
     if (retained === undefined) {
@@ -73,7 +83,8 @@ export class InMemoryTaskStore {
     if (transition.status !== 'failed' && transition.status !== 'cancelled') {
       delete updated.failure;
     }
-    if (transition.status !== 'awaiting_human_approval') {
+    if (transition.status === 'completed' ||
+        transition.status === 'failed' || transition.status === 'cancelled') {
       delete updated.activeApprovalId;
     }
 

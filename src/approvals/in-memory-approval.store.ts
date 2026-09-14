@@ -68,6 +68,11 @@ export class InMemoryApprovalStore {
     return request === undefined ? undefined : this.read(request);
   }
 
+  /** Internal read-only consumption state; never part of public snapshots. */
+  isConsumed(approvalId: string): boolean {
+    return this.consumedApprovalIds.has(approvalId);
+  }
+
   listByConversation(conversationId: string): ApprovalRequest[] {
     return [...this.requests.values()]
       .filter((request) => request.conversationId === conversationId)

@@ -82,6 +82,10 @@ export class ToolInvoker implements AgentRuntime {
       return { kind: 'forbidden', reason: 'Task is unavailable.' };
     }
 
+    if (ctx.approvalId !== undefined && ctx.approvalId !== task.activeApprovalId) {
+      return { kind: 'rejected', reason: 'Approval is unavailable.' };
+    }
+
     if (policy === 'HUMAN_APPROVAL_REQUIRED') {
       const hash = payloadHash(definition, parsed.data as Record<string, unknown>, {
         conversationId: conversation.id, taskId: task.id,
@@ -110,14 +114,19 @@ export class ToolInvoker implements AgentRuntime {
       }
       if (approval.payloadHash !== hash) {
         const result = this.approvals.supersedeOnMismatch(approval.id, requestInput());
-        return result.kind === 'replaced'
-          ? { kind: 'awaiting_approval', approvalId: result.replacement.id }
-          : { kind: 'rejected', reason: 'Approval is unavailable.' };
+        if (result.kind !== 'replaced' ||
+            !this.tasks.clearActiveApproval(task.id, approval.id)) {
+          return { kind: 'rejected', reason: 'Approval is unavailable.' };
+        }
+        return { kind: 'awaiting_approval', approvalId: result.replacement.id };
       }
       if (approval.status === 'pending') {
         return { kind: 'awaiting_approval', approvalId: approval.id };
       }
       if (approval.resolvedBy !== conversation.userId || !this.approvals.consume(approval.id, hash)) {
+        return { kind: 'rejected', reason: 'Approval is unavailable.' };
+      }
+      if (!this.tasks.clearActiveApproval(task.id, approval.id)) {
         return { kind: 'rejected', reason: 'Approval is unavailable.' };
       }
     }

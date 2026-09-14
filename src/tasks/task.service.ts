@@ -57,6 +57,11 @@ export class TaskService {
     return this.commit(taskId, { status: 'queued' }, correlationId);
   }
 
+  /** Internal compare-and-clear operation for the approval execution boundary. */
+  clearActiveApproval(taskId: string, expectedApprovalId: string): boolean {
+    return this.store.clearActiveApproval(taskId, expectedApprovalId);
+  }
+
   complete(
     taskId: string,
     result: TaskResult,

@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import type { AuthContextService } from '../auth/auth-context.service';
 import type { InMemoryConversationStore } from '../conversations/in-memory-conversation.store';
+import type { TaskQueueService } from '../tasks/task-queue.service';
 import type { TaskService } from '../tasks/task.service';
 import type { ApprovalRequest } from './approval-request';
 import type { InMemoryApprovalStore } from './in-memory-approval.store';
@@ -39,6 +40,7 @@ export class ApprovalDecisionService {
     private readonly conversations: InMemoryConversationStore,
     private readonly authContexts: AuthContextService,
     private readonly tasks: TaskService,
+    private readonly queue: TaskQueueService,
   ) {}
 
   recordDecision(
@@ -64,7 +66,7 @@ export class ApprovalDecisionService {
     const key = JSON.stringify([userId, approvalId, parsed.data.idempotencyKey]);
     const cached = this.results.get(key);
     if (cached !== undefined) {
-      this.reconcileApproval(approvalId);
+      this.reconcileApproval(approvalId, userId);
       return structuredClone(cached);
     }
 
@@ -81,11 +83,11 @@ export class ApprovalDecisionService {
     }
 
     this.results.set(key, structuredClone(result));
-    this.reconcileApproval(approvalId);
+    this.reconcileApproval(approvalId, userId);
     return structuredClone(result);
   }
 
-  private reconcileApproval(approvalId: string): void {
+  private reconcileApproval(approvalId: string, userId: string): void {
     // Reconcile current storage state, never the cached decision snapshot.
     const approval = this.approvals.findById(approvalId);
     if (approval === undefined) return;
@@ -94,7 +96,6 @@ export class ApprovalDecisionService {
       approval.status === 'approved' &&
       Date.parse(approval.expiresAt) <= Date.now()
     );
-    if (approval.status !== 'rejected' && !expired) return;
 
     const task = this.tasks.findById(approval.taskId);
     if (
@@ -106,6 +107,21 @@ export class ApprovalDecisionService {
     ) {
       return;
     }
+
+    if (!expired && approval.status === 'approved') {
+      if (
+        approval.resolvedBy !== userId ||
+        !(Date.parse(approval.expiresAt) > Date.now()) ||
+        this.approvals.isConsumed(approval.id)
+      ) return;
+
+      // Synchronous transition is the single-winner gate, including replays.
+      const correlationId = randomUUID();
+      this.tasks.requeue(task.id, correlationId);
+      this.queue.enqueue(task.id, correlationId);
+      return;
+    }
+    if (approval.status !== 'rejected' && !expired) return;
 
     this.tasks.fail(
       task.id,

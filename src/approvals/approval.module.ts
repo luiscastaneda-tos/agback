@@ -6,6 +6,7 @@ import { loadRuntimeConfig } from '../config/runtime-config';
 import { ConversationModule } from '../conversations/conversation.module';
 import { InMemoryConversationStore } from '../conversations/in-memory-conversation.store';
 import { TaskModule } from '../tasks/task.module';
+import { TaskQueueService } from '../tasks/task-queue.service';
 import { TaskService } from '../tasks/task.service';
 import { ApprovalDecisionService } from './approval-decision.service';
 import { InMemoryApprovalStore } from './in-memory-approval.store';
@@ -19,13 +20,14 @@ import { InMemoryApprovalStore } from './in-memory-approval.store';
     },
     {
       provide: ApprovalDecisionService,
-      inject: [InMemoryApprovalStore, InMemoryConversationStore, AuthContextService, TaskService],
+      inject: [InMemoryApprovalStore, InMemoryConversationStore, AuthContextService, TaskService, TaskQueueService],
       useFactory: (
         approvals: InMemoryApprovalStore,
         conversations: InMemoryConversationStore,
         authContexts: AuthContextService,
         tasks: TaskService,
-      ) => new ApprovalDecisionService(approvals, conversations, authContexts, tasks),
+        queue: TaskQueueService,
+      ) => new ApprovalDecisionService(approvals, conversations, authContexts, tasks, queue),
     },
   ],
   exports: [InMemoryApprovalStore, ApprovalDecisionService],

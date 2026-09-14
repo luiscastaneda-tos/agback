@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 30,
+  "iteration": 31,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -34,14 +34,15 @@
     "BE-020-01",
     "BE-021-01",
     "BE-022-01",
-    "BE-022-02"
+    "BE-022-02",
+    "BE-023-01"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-022-02",
+    "task_id": "BE-023-01",
     "verdict": "approve",
-    "summary": "The complete diff meets BE-022-02 requirements: authenticated ownership checks precede idempotency lookup, synchronous submission creates and enqueues one task, and responses use safe contract projections. Changes stay within allowed paths and preserve architecture boundaries. Harness build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T17:31:04Z",
+    "summary": "The change meets BE-023-01: validated, unique submissions append one ordered note when existing parent or child tasks are active, while preserving conversation state and normal task creation. Only the allowed file changed; no architecture or security violations found. Harness build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T17:33:34Z",
     "provider": "codex"
   },
   "notes": [
@@ -52,7 +53,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 30,
+    "slot": 31,
     "last_provider": "codex",
     "claude_review_every": 0
   }

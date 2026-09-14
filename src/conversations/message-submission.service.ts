@@ -53,6 +53,18 @@ export class MessageSubmissionService {
     const existing = records.get(body.clientMessageId);
     if (existing) return this.copy(existing);
 
+    const hasActiveWork = this.tasks.listByConversation(conversationId).some(
+      (task) => task.status === 'queued' || task.status === 'running' ||
+        task.status === 'awaiting_human_approval',
+    );
+    if (hasActiveWork) {
+      this.conversations.update(conversationId, {
+        state: {
+          pendingUserNotes: [...conversation.state.pendingUserNotes, body.content],
+        },
+      });
+    }
+
     const messageId = randomUUID();
     const correlationId = randomUUID();
     const task = this.tasks.create({

@@ -1,4 +1,6 @@
 export interface RuntimeConfig {
+  readonly supabaseUrl: string;
+  readonly supabaseAnonKey: string;
   readonly port: number;
   readonly llmProvider: string;
   readonly llmModel: string;
@@ -64,8 +66,35 @@ function parseHttpUrl(name: string, value: string | undefined): string {
   return candidate;
 }
 
+function parsePublicClientKey(value: string | undefined): string {
+  const key = requireNonEmpty('SUPABASE_ANON_KEY', value);
+  if (/^sb_publishable_[A-Za-z0-9_-]+$/.test(key)) return key;
+  try {
+    const parts = key.split('.');
+    if (parts.length !== 3 || parts.some((part) => !/^[A-Za-z0-9_-]+$/.test(part))) {
+      throw new Error();
+    }
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+    if (payload?.role === 'anon') return key;
+  } catch {
+    // Never include the supplied key or parsing error.
+  }
+  throw new Error('Invalid environment variable: SUPABASE_ANON_KEY must be a public client key');
+}
+
+function parseSupabaseUrl(value: string | undefined): string {
+  const candidate = parseHttpUrl('SUPABASE_URL', value);
+  const url = new URL(candidate);
+  if (url.username || url.password || url.search || url.hash) {
+    throw new Error('Invalid environment variable: SUPABASE_URL');
+  }
+  return candidate;
+}
+
 export function loadRuntimeConfig(): RuntimeConfig {
   return {
+    supabaseUrl: parseSupabaseUrl(process.env.SUPABASE_URL),
+    supabaseAnonKey: parsePublicClientKey(process.env.SUPABASE_ANON_KEY),
     port: parseInteger('PORT', process.env.PORT, DEFAULT_PORT, 1, 65535),
     llmProvider: requireNonEmpty('LLM_PROVIDER', process.env.LLM_PROVIDER),
     llmModel: requireNonEmpty('LLM_MODEL', process.env.LLM_MODEL),

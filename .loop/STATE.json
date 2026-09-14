@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 24,
+  "iteration": 25,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -28,14 +28,15 @@
     "BE-013-03",
     "BE-013-04",
     "BE-014-01",
-    "BE-017-01"
+    "BE-017-01",
+    "BE-015-01"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-017-01",
+    "task_id": "BE-015-01",
     "verdict": "approve",
-    "summary": "The diff meets BE-017-01 requirements and stays within allowed paths. Hotel search uses strict destination validation, inert metadata, registry-based execution, and the labelled mock without forwarding credentials. Existing duplicate rejection and defensive handle copies remain intact. Harness build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T17:10:02Z",
+    "summary": "The complete diff meets BE-015-01 requirements and stays within the two authorized files. Provider-neutral types and configured registry selection preserve the execution boundary, reject blank configuration and duplicate or missing providers, and introduce no integrations or credential handling. Harness build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T17:15:33Z",
     "provider": "codex"
   },
   "notes": [
@@ -46,7 +47,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 24,
+    "slot": 25,
     "last_provider": "codex",
     "claude_review_every": 0
   }

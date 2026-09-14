@@ -46,11 +46,20 @@ export class TaskService {
     activeApprovalId: string,
     correlationId: string,
   ): AgentTask {
-    return this.commit(
+    const task = this.commit(
       taskId,
       { status: 'awaiting_human_approval', activeApprovalId },
       correlationId,
     );
+    this.eventBus.publish({
+      type: 'approval.requested',
+      conversationId: task.conversationId,
+      taskId: task.id,
+      agentName: task.agentName,
+      correlationId,
+      payload: { approvalId: activeApprovalId, status: 'pending' },
+    });
+    return task;
   }
 
   requeue(taskId: string, correlationId: string): AgentTask {

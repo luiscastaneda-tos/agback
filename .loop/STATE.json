@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 17,
+  "iteration": 18,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -21,14 +21,15 @@
     "BE-012-02",
     "BE-012-03",
     "BE-012-04",
-    "BE-013-01"
+    "BE-013-01",
+    "BE-013-02"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-013-01",
+    "task_id": "BE-013-02",
     "verdict": "approve",
-    "summary": "The change meets BE-013-01 acceptance criteria and architecture rules. Active authentication and ownership checks precede cache disclosure and decision recording; scoped idempotency returns detached results, and lifecycle changes remain delegated to the approval store. Only the allowed file is added. Harness build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T16:46:26Z",
+    "summary": "The change meets BE-013-02 within the three allowed files. Authentication, service delegation, singleton providers, explicit contract projection, and safe error responses comply with requirements. No execution capabilities or approval bypasses were introduced. Harness build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T16:48:56Z",
     "provider": "codex"
   },
   "notes": [
@@ -39,7 +40,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 17,
+    "slot": 18,
     "last_provider": "codex",
     "claude_review_every": 0
   }

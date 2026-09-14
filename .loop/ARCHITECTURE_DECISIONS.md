@@ -196,6 +196,55 @@ Verification is encapsulated behind an `AuthTokenVerifier` interface, so a
 future server-side strategy such as `supabase.auth.getUser(token)` can replace
 `JwksTokenVerifier` without affecting tasks, SSE, approvals or executors.
 
+### Amendment (2026-09-14) — Supabase Auth remote verification (Option B)
+
+Frozen by the human while resolving the BE-007 HUMAN_GATE on 2026-09-14.
+
+#### Mechanical evidence from Supabase project
+```http
+GET https://iyuomxgqruhqjiygsgrw.supabase.co/auth/v1/.well-known/jwks.json
+HTTP/2 200
+{"keys":[]}
+```
+The live Supabase project does not publish asymmetric signing keys in its JWKS endpoint, operating under symmetric HS256 signing. Therefore local JWKS verification is impossible without exposing the secret.
+
+#### Concrete Strategy
+For V1, `AuthTokenVerifier` interface is retained, and implemented via remote verification:
+```text
+AuthTokenVerifier
+        ↓
+SupabaseAuthTokenVerifier
+        ↓
+supabase.auth.getUser(accessToken)
+        ↓
+Supabase Auth server
+```
+This preserves the boundary so that `JwksAuthTokenVerifier` can cleanly replace `SupabaseAuthTokenVerifier` in the future if the project migrates to asymmetric signing keys.
+
+#### Security rules
+- Strictly forbidden: `JWT_SECRET`, shared JWT secret, `service_role`, `SUPABASE_SERVICE_ROLE_KEY`.
+- Never copy or use the HS256 secret to verify tokens locally.
+- Verification is performed remotely against Supabase Auth.
+
+#### Backend configuration
+The implementation may require:
+```text
+SUPABASE_URL
+SUPABASE_ANON_KEY
+```
+or equivalent public/publishable client key. This key is exclusively the public client key needed to communicate with Supabase Auth; never `service_role`. Documented in `.env.example` with non-secret placeholders only.
+
+#### AuthContext & Failure Behavior
+- Upon validation: `userId` (from Supabase `user.id`), `accessToken` (in-memory only), `expiresAt`.
+- The rest of the system sees only the opaque `authContextId`.
+- Access token forbidden in: prompts, LLM, task payloads, events/SSE, logs, errors, UI, URLs, persistent storage.
+- No refresh tokens, no automatic refresh in V1.
+- Expired token/context produces `AUTH_CONTEXT_EXPIRED`.
+- If `getUser(accessToken)` fails, returns an invalid user, or Supabase Auth cannot confirm identity: fail closed (do NOT create AuthContext). Supabase Auth unavailability must never become token acceptance or a local fallback.
+
+#### Dependencies
+If the implementation requires `@supabase/supabase-js` and it is absent, use the formal host-side dependency provisioning mechanism. The Architect must explicitly authorize it via `allowed_dependencies`. Do not change strategy to avoid installing the dependency.
+
 ### AuthContext
 
 Once the JWT is validated, the backend creates an opaque `authContextId`.

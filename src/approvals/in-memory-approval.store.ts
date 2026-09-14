@@ -10,6 +10,7 @@ import type {
 /** Process-local approval storage; this store grants no execution authority. */
 export class InMemoryApprovalStore {
   private readonly requests = new Map<string, ApprovalRequest>();
+  private readonly consumedApprovalIds = new Set<string>();
   private readonly approvalTtlMs: number;
 
   constructor(config: Pick<RuntimeConfig, 'approvalTtlMs'>) {
@@ -86,6 +87,27 @@ export class InMemoryApprovalStore {
       }
     }
     return structuredClone(request);
+  }
+
+  /**
+   * Internal operation for the trusted invoker's expected payload hash.
+   * Returns true only for the first eligible consumption; grants no capability.
+   * Checks and recording are synchronous, with no yield between them.
+   */
+  consume(approvalId: string, expectedPayloadHash: string): boolean {
+    const request = this.requests.get(approvalId);
+    if (
+      request === undefined ||
+      request.status !== 'approved' ||
+      request.payloadHash !== expectedPayloadHash ||
+      !(Date.parse(request.expiresAt) > Date.now()) ||
+      this.consumedApprovalIds.has(approvalId)
+    ) {
+      return false;
+    }
+
+    this.consumedApprovalIds.add(approvalId);
+    return true;
   }
 
   private read(request: ApprovalRequest): ApprovalRequest {

@@ -149,6 +149,22 @@ Changing a contract is a human operation: stop both loops, edit here, bump
 `contracts/VERSION`, re-vendor, record the decision in both repositories,
 commit separately, resume.
 
+### Clarification — Internal contract consumption convention
+
+Recorded while resolving the BE-008-01 HUMAN_GATE on 2026-09-14.
+This clarifies D-017; it does not modify the frozen 1.0.0 contracts.
+
+- `contracts/` remains the sole source of truth for public contracts.
+- Code under `src/` must NOT directly import TypeScript from `contracts/` while `rootDir` remains `./src`.
+- Do NOT modify `tsconfig.json`. Do NOT change `rootDir`. Do NOT write relative imports like `../../contracts/...` from `src/`.
+- `src/` may define internal models / internal projections necessary for domain, application, or agent registry (e.g. `src/agents/agent-descriptor.ts`), but those types:
+  - do not substitute the public contract;
+  - are not considered canonical;
+  - must not evolve independently of the contract;
+  - must not silently add distinct public semantics.
+- At HTTP, SSE, or adapter boundaries, map explicitly from the internal model to the public contract shape.
+- Root contracts remain frozen at 1.0.0. If public contracts change in the future, the human coordinated operation across both repos applies and must reconcile any affected internal projections.
+
 ## D-018 - Supabase JWT verification and AuthContext credential retention (V1)
 
 Frozen by the human while resolving the BE-007 HUMAN_GATE, after D-001..D-017.

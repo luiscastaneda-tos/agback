@@ -1,7 +1,9 @@
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 
 import type { AuthContextService } from '../auth/auth-context.service';
 import type { InMemoryConversationStore } from '../conversations/in-memory-conversation.store';
+import type { TaskService } from '../tasks/task.service';
 import type { ApprovalRequest } from './approval-request';
 import type { InMemoryApprovalStore } from './in-memory-approval.store';
 
@@ -36,6 +38,7 @@ export class ApprovalDecisionService {
     private readonly approvals: InMemoryApprovalStore,
     private readonly conversations: InMemoryConversationStore,
     private readonly authContexts: AuthContextService,
+    private readonly tasks: TaskService,
   ) {}
 
   recordDecision(
@@ -60,7 +63,10 @@ export class ApprovalDecisionService {
     // Tuple encoding avoids collisions; every replay rechecks active ownership.
     const key = JSON.stringify([userId, approvalId, parsed.data.idempotencyKey]);
     const cached = this.results.get(key);
-    if (cached !== undefined) return structuredClone(cached);
+    if (cached !== undefined) {
+      this.reconcileRejectedApproval(approvalId);
+      return structuredClone(cached);
+    }
 
     // The store owns expiry, non-pending no-ops and decision audit metadata.
     // No asynchronous yield separates authorization, mutation and caching.
@@ -75,6 +81,30 @@ export class ApprovalDecisionService {
     }
 
     this.results.set(key, structuredClone(result));
+    this.reconcileRejectedApproval(approvalId);
     return structuredClone(result);
+  }
+
+  private reconcileRejectedApproval(approvalId: string): void {
+    // Reconcile current storage state, never the cached decision snapshot.
+    const approval = this.approvals.findById(approvalId);
+    if (approval === undefined || approval.status !== 'rejected') return;
+
+    const task = this.tasks.findById(approval.taskId);
+    if (
+      task === undefined ||
+      task.id !== approval.taskId ||
+      task.conversationId !== approval.conversationId ||
+      task.status !== 'awaiting_human_approval' ||
+      task.activeApprovalId !== approval.id
+    ) {
+      return;
+    }
+
+    this.tasks.fail(
+      task.id,
+      { code: 'APPROVAL_REJECTED', message: 'Approval was rejected.' },
+      randomUUID(),
+    );
   }
 }

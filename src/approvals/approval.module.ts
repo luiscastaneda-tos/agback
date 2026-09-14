@@ -5,11 +5,13 @@ import { AuthModule } from '../auth/auth.module';
 import { loadRuntimeConfig } from '../config/runtime-config';
 import { ConversationModule } from '../conversations/conversation.module';
 import { InMemoryConversationStore } from '../conversations/in-memory-conversation.store';
+import { TaskModule } from '../tasks/task.module';
+import { TaskService } from '../tasks/task.service';
 import { ApprovalDecisionService } from './approval-decision.service';
 import { InMemoryApprovalStore } from './in-memory-approval.store';
 
 @Module({
-  imports: [AuthModule, ConversationModule],
+  imports: [AuthModule, ConversationModule, TaskModule],
   providers: [
     {
       provide: InMemoryApprovalStore,
@@ -17,12 +19,13 @@ import { InMemoryApprovalStore } from './in-memory-approval.store';
     },
     {
       provide: ApprovalDecisionService,
-      inject: [InMemoryApprovalStore, InMemoryConversationStore, AuthContextService],
+      inject: [InMemoryApprovalStore, InMemoryConversationStore, AuthContextService, TaskService],
       useFactory: (
         approvals: InMemoryApprovalStore,
         conversations: InMemoryConversationStore,
         authContexts: AuthContextService,
-      ) => new ApprovalDecisionService(approvals, conversations, authContexts),
+        tasks: TaskService,
+      ) => new ApprovalDecisionService(approvals, conversations, authContexts, tasks),
     },
   ],
   exports: [InMemoryApprovalStore, ApprovalDecisionService],

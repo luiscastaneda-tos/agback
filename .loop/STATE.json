@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 20,
+  "iteration": 21,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -24,14 +24,15 @@
     "BE-013-01",
     "BE-013-02",
     "BE-016-01",
-    "BE-013A-01"
+    "BE-013A-01",
+    "BE-013-03"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-013A-01",
+    "task_id": "BE-013-03",
     "verdict": "approve",
-    "summary": "The three authorized files meet BE-013A-01 acceptance criteria. The registry starts empty, rejects blank and duplicate keys, returns undefined for unknown keys, and never invokes executors. ExecutionContext matches existing credential types. No execution bypass, credential exposure, or scope violation is introduced. Harness build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T17:00:23Z",
+    "summary": "The change meets BE-013-03 requirements within the two allowed files. Rejection reconciliation preserves authorization and cached responses, checks current approval and matching task state, and emits a single task failure with sanitized text and an internally generated correlation ID. No architecture violations found. Harness build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T17:02:42Z",
     "provider": "codex"
   },
   "notes": [
@@ -42,7 +43,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 20,
+    "slot": 21,
     "last_provider": "codex",
     "claude_review_every": 0
   }

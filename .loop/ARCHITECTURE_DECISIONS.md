@@ -706,6 +706,39 @@ without introducing sensitive data or tokens into the envelope.
   plus any strictly necessary minimal wiring.
 - Once runtime producers are active and committed, `BE-024-08` will capture genuine runtime-provenance fixtures.
 
+## D-024 - Runtime fixture capture execution deferred to human review handoff
+
+Recorded while resolving the second BE-024 HUMAN_GATE on 2026-09-14.
+Freezes the completion criteria for BE-024, the security rationale for deferring
+live execution, and the required manual verification procedure for BE-025 / HUMAN_REVIEW.md.
+
+### 1. Scope & Completion Criteria for BE-024
+For V1, the implementation of `BE-024` is considered fully complete because:
+- The capture utilities `fixtures/capture-hotel-search.mjs` and `fixtures/capture-cart-approval.mjs` are fully implemented, verified, and documented.
+- The actual live execution of these scripts—which requires real Supabase credentials and an interactive user prompt—is explicitly deferred to `BE-025` / `docs/HUMAN_REVIEW.md`.
+
+### 2. Security Rationale
+- The autonomous harness operates non-interactively, never receives real Supabase access tokens, never simulates interactive human approvals, and never fabricates artificial SSE fixture files.
+- Actual execution of authenticated capture is conducted exclusively during human review.
+
+### 3. Requirements for docs/HUMAN_REVIEW.md
+The human review guide produced in `BE-025` must document the precise step-by-step procedure:
+1. Configure necessary environment variables without committing secrets;
+2. Start the backend locally (`npm run build && npm run start`);
+3. Obtain/sign-in with a Supabase test user to obtain an access token;
+4. Supply the access token strictly to the intended hidden interactive prompt;
+5. Execute `node fixtures/capture-hotel-search.mjs --base-url http://localhost:3000 --output fixtures/hotel-search.sse`;
+6. Execute `node fixtures/capture-cart-approval.mjs --base-url http://localhost:3000 --output fixtures/cart-approval.sse`;
+7. Review the allowlisted approval preview in the terminal;
+8. Type `APPROVE` manually at the confirmation prompt;
+9. Verify that real runtime events include the expected lifecycle (`approval.requested`, `approval.approved`, `task.completed`);
+10. Verify that no access tokens, `authContextId`, raw tool arguments, or sensitive PII appear anywhere in the captured fixtures.
+
+### 4. Status Claims & Fixture Integrity
+- `READY_FOR_HUMAN_REVIEW` does NOT mean `PRODUCTION_READY`.
+- Pending `.sse` files must not be manually fabricated or artificially generated in the codebase.
+- If fixtures captured during human review are subsequently committed, they must first be inspected to confirm they are completely sanitized.
+
 ## OPEN - escalate, never invent
 
 ### Q-001 - Durable persistence and retention

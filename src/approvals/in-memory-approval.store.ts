@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type { RuntimeConfig } from '../config/runtime-config';
+import type { EventBusService } from '../events/event-bus.service';
 import type {
   ApprovalRequest,
   CreateApprovalRequestInput,
@@ -14,7 +15,10 @@ export class InMemoryApprovalStore {
   private readonly consumedApprovalIds = new Set<string>();
   private readonly approvalTtlMs: number;
 
-  constructor(config: Pick<RuntimeConfig, 'approvalTtlMs'>) {
+  constructor(
+    config: Pick<RuntimeConfig, 'approvalTtlMs'>,
+    private readonly eventBus: EventBusService,
+  ) {
     const ttl = config.approvalTtlMs;
     if (
       !Number.isSafeInteger(ttl) ||
@@ -163,6 +167,17 @@ export class InMemoryApprovalStore {
   private expirePending(request: ApprovalRequest, now: number): void {
     if (request.status === 'pending' && Date.parse(request.expiresAt) <= now) {
       request.status = 'expired';
+      this.eventBus.publish({
+        type: 'approval.expired',
+        conversationId: request.conversationId,
+        taskId: request.taskId,
+        correlationId: randomUUID(),
+        payload: {
+          approvalId: request.id,
+          status: request.status,
+          action: request.action,
+        },
+      });
     }
   }
 }

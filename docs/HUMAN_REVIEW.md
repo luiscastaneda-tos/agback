@@ -90,8 +90,9 @@ the invoker. Consumption and clearing precede executor dispatch.
   are denied. An administrator label must not grant owner approval authority.
 - [ ] Reject a pending request and confirm no dispatch. Check expiry with a
   short, explicitly configured `APPROVAL_TTL_MS` in a separate local run; restore
-  `900000` afterward. Pending reads expire lazily; expired approval consumption
-  fails. Do not assume a background task-expiry scheduler exists.
+  `900000` afterward. Pending reads expire lazily and publish one `approval.expired` event per
+  pending-to-expired transition. Verify repeated reads, listings and decisions
+  publish no duplicate expiry event. Expired approval consumption fails. Do not assume a background task-expiry scheduler exists.
 - [ ] Review binding failures for another task/conversation, wrong active ID,
   changed material fields/version, expired or consumed approvals. For material
   mismatch, verify supersession, replacement request, and a fresh pause. The
@@ -141,7 +142,8 @@ an asynchronous gap. Slow connections are closed on write backpressure.
   deduplication. Approval payloads should contain only `approvalId`, `status`,
   and optional `action`. Each envelope needs conversation/task/correlation IDs;
   a decision creates a new correlation ID, so do not require one correlation ID
-  across the entire conversation. Expired/superseded event gaps are noted below.
+  across the entire conversation. Supersession and pending-expiry producers are implemented; runtime verification
+  and approved-but-expired coverage remain pending as noted below.
 
 ### Delegation and concurrent messages
 
@@ -262,13 +264,13 @@ These are source observations for human assessment, not fixes or new policy.
 
 | Finding | Evidence and consequence |
 | --- | --- |
-| Supersession producer implemented; expiry producer missing | `src/tools/tool-invoker.ts` publishes `approval.superseded` through EventBusService immediately after a successful mismatch replacement, identifying the original approval with trusted conversation/task metadata and the supervisor worker correlation ID. Publication precedes active-approval clearing and the replacement `approval.requested` event from TaskService; unsuccessful or repeated replacement attempts emit nothing. Payload contains only approval ID, status and action. Runtime verification remains pending. `src/approvals/in-memory-approval.store.ts` still expires pending entries without publishing `approval.expired`. Requested/approved/rejected producers exist in TaskService/ApprovalDecisionService; do not mark the full lifecycle complete. |
+| Supersession and pending-expiry producers implemented | `src/tools/tool-invoker.ts` publishes `approval.superseded` through EventBusService immediately after a successful mismatch replacement, identifying the original approval with trusted conversation/task metadata and the supervisor worker correlation ID. Publication precedes active-approval clearing and the replacement `approval.requested` event from TaskService; unsuccessful or repeated replacement attempts emit nothing. Payload contains only approval ID, status and action. Runtime verification remains pending. `src/approvals/in-memory-approval.store.ts` now publishes `approval.expired` through the existing EventBusService injected by ApprovalModule immediately after its synchronous pending-to-expired transition. The envelope uses stored conversation/task IDs and a server-generated correlation UUID; the payload contains exactly `approvalId`, `status`, and `action`. The transition itself deduplicates repeated reads, listings and decisions. TTL and lazy expiry triggers are unchanged; no timer was added. Pending-expiry runtime verification remains pending. Requested/approved/rejected producers exist in TaskService/ApprovalDecisionService; do not mark the full lifecycle complete. |
 | Traveler read/search absent | PolicyEngine explicitly leaves traveler action identifiers undeclared; ToolRegistry contains only search and three reservation tools. Frozen AUTO traveler policy does not imply a working authorized traveler API. |
 | Tasks endpoint absent | `contracts/http.md` and `docs/demo-provider.md` describe `GET /conversations/:id/tasks`, but the current `src/http/` controllers do not implement it. Do not depend on it for manual state inspection. `contracts/task.ts` also includes an auth handle while D-018 forbids public exposure without an approved need; any future adapter reconciliation needs architectural review, not a silent contract edit. |
 | Redaction is key-based | `src/events/event-redactor.ts` retains scalar text values and preview strings. It is not a general secret/PII detector. Safe producers and human fixture inspection remain necessary. |
 | Additional operational coverage absent | `tool.called`/`tool.completed` occur in event types/redactor but no publishing call was found in `src/`. Agent lifecycle events are also not established merely by having a descriptor/provider loop. Review observable lifecycle coverage against GOAL rather than inferring it from the event union. |
 | Pending notes are retained | MessageSubmissionService creates separate follow-up tasks, but no reader that applies/clears `pendingUserNotes` on child result was found. Do not claim result-driven note reconciliation; the implemented path is separate task submission. |
-| Expiry is not a timer-driven event | ApprovalStore expires pending entries on access; approved-but-expired requests fail consumption without becoming expired there. D-023's expiry event coverage needs review. SSE authenticates on connection; the controller has no ongoing token-expiry closure timer. Do not claim continuous reauthentication. |
+| Expiry is not a timer-driven event | ApprovalStore expires pending entries on access and publishes the transition once. Approved-but-expired requests still fail consumption without becoming expired or publishing an expiry event there; that remaining D-023 coverage needs review. Runtime verification remains pending. SSE authenticates on connection; the controller has no ongoing token-expiry closure timer. Do not claim continuous reauthentication. |
 | Demo search destination corrected in source | `demo:hotel-search` now requests `Demo Harbor`, matching the mock catalog destination. Source inspection indicates two expected fictional matches: Mock Lantern House and Mock Cloud Garden. Authenticated runtime verification remains pending; this correction does not establish live availability. |
 
 - [ ] Review and disposition each finding with the architect/human; do not

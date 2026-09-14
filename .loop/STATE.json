@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 56,
+  "iteration": 57,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -60,14 +60,15 @@
     "BE-024-08A",
     "BE-025-01",
     "BE-025-02",
-    "BE-025-03"
+    "BE-025-03",
+    "BE-025-04"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-025-03",
+    "task_id": "BE-025-04",
     "verdict": "approve",
-    "summary": "BE-025-03 meets acceptance criteria. The destination matches both fictional catalog entries, documentation accurately preserves pending runtime verification, and changes stay within the three allowed files. Harness build and full-tree layering checks passed. No architecture or security regressions found.",
-    "reviewed_at": "2026-09-14T20:45:32Z",
+    "summary": "BE-025-04 meets acceptance criteria within the three allowed files. Pending expiry publishes one sanitized event through the existing event bus, with transition-based deduplication and unchanged authorization behavior. Documentation retains runtime verification caveats. Harness build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T20:47:57Z",
     "provider": "codex"
   },
   "notes": [
@@ -78,7 +79,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 58,
+    "slot": 59,
     "last_provider": "codex",
     "claude_review_every": 0
   }

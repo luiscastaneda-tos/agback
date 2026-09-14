@@ -18,7 +18,9 @@ import { InMemoryApprovalStore } from './in-memory-approval.store';
   providers: [
     {
       provide: InMemoryApprovalStore,
-      useFactory: () => new InMemoryApprovalStore(loadRuntimeConfig()),
+      inject: [EventBusService],
+      useFactory: (eventBus: EventBusService) =>
+        new InMemoryApprovalStore(loadRuntimeConfig(), eventBus),
     },
     {
       provide: ApprovalDecisionService,

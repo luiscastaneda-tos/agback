@@ -1,6 +1,7 @@
 # V1 human review handoff
 
-Prepared for BE-025-01 on 2026-09-14. Maximum readiness status:
+Prepared for BE-025-01; reconciled with task snapshots in BE-025-10 on
+2026-09-14. Maximum readiness status:
 `READY_FOR_HUMAN_REVIEW`. Human review and authenticated runtime captures are
 **pending**. This document does not certify that V1 satisfies every invariant;
 the findings below require review. It does not claim production readiness.
@@ -16,8 +17,8 @@ capture to this human handoff; absent `.sse` files must not be fabricated.
 | Evidence class | What is known |
 | --- | --- |
 | Implementation inspection | The paths below were read as source evidence. Observations are not executed security checks. |
-| Harness-reported verification | `.loop/STATE.json` records the BE-024-08A review at `2026-09-14T20:32:40Z`, reporting build and full-tree layering checks passed. This is a prior harness report, not a new verification of this handoff or proof of runtime behavior. |
-| This documentation task | No build, layering guard, test suite, authenticated capture, approval decision, or backend execution was performed. Only this guide is added. |
+| Harness-reported verification | [STATE.json](../.loop/STATE.json) records the BE-025-09 harness review at `2026-09-14T21:03:17Z`, reporting build and full-tree layering checks passed. This is a prior harness report, not a new verification of this handoff or proof of runtime behavior. |
+| This documentation task | No build, layering guard, test suite, authenticated capture, approval decision, or backend execution was performed. Only this guide is updated. |
 | Human verification | Every checkbox below remains unchecked. Record reviewer, date, revision, observed outcome, and sanitized evidence when conducting review. |
 
 ## Implementation observations and human checklist
@@ -79,11 +80,13 @@ the invoker. Consumption and clearing precede executor dispatch.
 - [ ] Submit each reservation scenario from [demo-provider.md](demo-provider.md).
   Before deciding, observe `approval.requested` and verify no corresponding
   `[MOCK]` cart/confirmation/cancellation invocation appears in the local backend
-  log. Inspect `awaiting_human_approval` in a local debugger if necessary; the
-  tasks HTTP endpoint is missing (see findings).
+  log. Fetch `GET /conversations/:id/tasks` as the owner and inspect the
+  matching task's `awaiting_human_approval` status and `activeApprovalId`.
 - [ ] Review only the allowlisted preview; approve as the conversation owner.
   Verify automatic queued -> running -> completed progression without a separate
-  resume call, exactly one mock invocation, and cleared `activeApprovalId`.
+  resume call and exactly one mock invocation. Fetch a task snapshot after
+  completion to verify `status: completed`, `result`, `finishedAt`, and omitted
+  `activeApprovalId`; use events for intermediate states that snapshots may miss.
 - [ ] Retry the same decision/idempotency UUID and then an identical decision
   with another UUID. Verify no duplicate execution, requeue or approved event.
 - [ ] With a second test user, verify approval decisions and conversation access
@@ -100,6 +103,41 @@ the invoker. Consumption and clearing precede executor dispatch.
   without bypassing checks or treating new chat text as mutation of a paused job.
 - [ ] Verify active approval clearing on consumption, terminal task state and
   replacement. Confirm the ID alone cannot authorize execution.
+
+### Task snapshots and owner access
+
+[ConversationTasksController](../src/http/conversation-tasks.controller.ts),
+registered in [HttpModule](../src/http/http.module.ts) with TaskModule, implements
+`GET /conversations/:id/tasks -> 200 AgentTask[]`. Its class-level
+`@UseGuards(BearerAuthGuard)` requires bearer authentication. Before calling
+`InMemoryTaskStore.listByConversation(conversationId)`, it checks that the
+conversation exists and `conversation.userId === identity.userId`. Both a missing
+conversation and another user's conversation return 404 `CONVERSATION_NOT_FOUND`.
+Errors use `{ error: { code, message, requestId } }`.
+
+The controller explicitly projects the frozen [task contract](../contracts/task.ts):
+`id`, `conversationId`, `agentName`, `goal`, `status`, `authContextId`, `createdAt`,
+and, when defined, `parentTaskId`, `startedAt`, `finishedAt`, `result`, `failure`,
+and `activeApprovalId`. It projects result fields `kind`, `data`, `summary` and
+failure fields `code`, `message`. These are source observations; authenticated
+runtime verification remains pending.
+
+D-025 authorizes the narrow D-018 exception for the opaque `authContextId` in task
+snapshots to satisfy frozen contract 1.0.0 and support frontend task/result
+projection. It is a server-side handle, never the Supabase access token. The
+frontend may handle it internally in transport but must not render it to users.
+This exception does not permit `authContextId` in operational events/SSE or
+rendered UI, or access tokens in tasks, responses, prompts, events, logs or UI.
+
+- [ ] As the authenticated owner, fetch `GET /conversations/:id/tasks`; verify
+  200 and the explicit contract fields above, including only an opaque
+  `authContextId`. Check completed task results for assistant response projection.
+- [ ] Repeat the request without valid bearer authentication and verify 401.
+  With a second authenticated test user, request the owner's conversation and
+  verify 404 `CONVERSATION_NOT_FOUND` with no task data. As the owner, request a
+  nonexistent conversation and verify the same 404 code and standard envelope.
+- [ ] Verify `authContextId` is not rendered in UI or emitted in events/SSE,
+  and no access token appears in any task snapshot.
 
 ### Credentials, events, and SSE
 
@@ -127,7 +165,7 @@ an asynchronous gap. Slow connections are closed on write backpressure.
   replace the original task's retained auth context.
 - [ ] Inspect task inputs, provider requests, HTTP responses, logs and SSE using
   fictional data: no access token or credential may escape; operational events
-  and UI must also exclude `authContextId`, raw arguments, prompts, reasoning,
+  and rendered UI must also exclude `authContextId`, raw arguments, prompts, reasoning,
   chain-of-thought and scratchpads. Do not paste credentials into chat content.
 - [ ] With authenticated `fetch` + `ReadableStream`, disconnect and reconnect
   using the last received numeric sequence in `Last-Event-ID` and the owner
@@ -157,11 +195,12 @@ notes when work is active, and does not edit the existing job. The
 [HTTP adapter](../src/http/conversation-messages.controller.ts) returns 202.
 
 - [ ] Capture hotel delegation; correlate `supervisor.delegated` to child
-  `parentTaskId` in local state and both task completions. Verify the supervisor
+  `parentTaskId` in owner-authenticated task snapshots and both task completions. Verify the supervisor
   completes delegation without awaiting the child and the child cannot book.
 - [ ] While a cart task awaits approval, submit `demo:greeting` with a new UUID.
-  Verify 202, a separate task, a stored pending note and no change to the paused
-  task's goal/material. Retry the same client UUID and verify no duplicate task.
+  Verify 202 and a separate task in owner-authenticated snapshots, with no
+  change to the paused task's goal. Inspect the stored pending note and unchanged
+  material in local state. Retry the same client UUID and verify no duplicate task.
   The queue drains processors serially; asynchronous acceptance does not imply
   simultaneous processor execution.
 
@@ -266,7 +305,7 @@ These are source observations for human assessment, not fixes or new policy.
 | --- | --- |
 | Supersession and pending-expiry producers implemented | `src/tools/tool-invoker.ts` publishes `approval.superseded` through EventBusService immediately after a successful mismatch replacement, identifying the original approval with trusted conversation/task metadata and the supervisor worker correlation ID. Publication precedes active-approval clearing and the replacement `approval.requested` event from TaskService; unsuccessful or repeated replacement attempts emit nothing. Payload contains only approval ID, status and action. Runtime verification remains pending. `src/approvals/in-memory-approval.store.ts` now publishes `approval.expired` through the existing EventBusService injected by ApprovalModule immediately after its synchronous pending-to-expired transition. The envelope uses stored conversation/task IDs and a server-generated correlation UUID; the payload contains exactly `approvalId`, `status`, and `action`. The transition itself deduplicates repeated reads, listings and decisions. TTL and lazy expiry triggers are unchanged; no timer was added. Pending-expiry runtime verification remains pending. Requested/approved/rejected producers exist in TaskService/ApprovalDecisionService; do not mark the full lifecycle complete. |
 | Traveler read/search absent | PolicyEngine explicitly leaves traveler action identifiers undeclared; ToolRegistry contains only search and three reservation tools. Frozen AUTO traveler policy does not imply a working authorized traveler API. |
-| Tasks endpoint absent | `contracts/http.md` and `docs/demo-provider.md` describe `GET /conversations/:id/tasks`, but the current `src/http/` controllers do not implement it. Do not depend on it for manual state inspection. `contracts/task.ts` also includes an auth handle while D-018 forbids public exposure without an approved need; any future adapter reconciliation needs architectural review, not a silent contract edit. |
+| Tasks endpoint implemented; runtime verification pending | [ConversationTasksController](../src/http/conversation-tasks.controller.ts) is registered in [HttpModule](../src/http/http.module.ts), requires bearer authentication, checks ownership before listing tasks, and returns 404 `CONVERSATION_NOT_FOUND` for missing or non-owned conversations. Its explicit projection matches frozen `AgentTask` 1.0.0. D-025 approves the opaque `authContextId` in snapshots only as described above; tokens remain prohibited and the handle must not enter events or rendered UI. Owner-only access and result projection still require authenticated human verification. |
 | Redaction is key-based | `src/events/event-redactor.ts` retains scalar text values and preview strings. It is not a general secret/PII detector. Safe producers and human fixture inspection remain necessary. |
 | Tool, HotelSearchAgent and SupervisorAgent lifecycle producers implemented | `src/tools/tool-invoker.ts` publishes `tool.called` through EventBusService immediately before executor dispatch, after authorization, approval consumption, executor resolution and credential checks. Its payload contains only the registered action and allowlisted preview label/value entries. Successful execution publishes `tool.completed` with only the registered action; executor rejection publishes no completion. Both events use trusted conversation/task IDs, the task's agent name, and the invocation correlation ID falling back to the task ID. Paths stopped before dispatch publish neither event. Runtime verification remains pending. `src/tasks/hotel-search-task-processor.ts` now publishes `agent.started` immediately before HotelSearchAgent invocation after task/context validation, then `agent.completed` for a completed invocation or `agent.failed` for a failed or throwing invocation. Stopped invocations publish only `agent.started` and retain their existing task outcomes. These events pass through EventBusService with empty payloads, trusted conversation/task IDs, `HotelSearchAgent` as agentName, and the unchanged context correlation ID. Invalid task/context input publishes no agent lifecycle events. HotelSearchAgent runtime verification remains pending. `src/tasks/supervisor-task-processor.ts` now uses EventBusService injected through AgentRuntimeModule to publish `agent.started` immediately before validated SupervisorAgent invocation, `agent.completed` for answer/cart/confirmation/cancellation success or after successful child-task delegation without awaiting child execution, and `agent.failed` for failed outcomes or invocation/delegation exceptions. Stopped outcomes emit only `agent.started`, preserving approval pauses and rejection/forbidden handling. Invalid task/context inputs emit no lifecycle events. SupervisorAgent lifecycle payloads are empty and use trusted conversation/task IDs, `SupervisorAgent` as agentName, and the unchanged context correlation ID; existing task results and failure mappings are preserved. This is source implementation evidence; SupervisorAgent runtime verification remains pending under D-024. |
 | Pending notes are retained | MessageSubmissionService creates separate follow-up tasks, but no reader that applies/clears `pendingUserNotes` on child result was found. Do not claim result-driven note reconciliation; the implemented path is separate task submission. |

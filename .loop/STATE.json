@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 29,
+  "iteration": 30,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -33,14 +33,15 @@
     "BE-019-01",
     "BE-020-01",
     "BE-021-01",
-    "BE-022-01"
+    "BE-022-01",
+    "BE-022-02"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-022-01",
+    "task_id": "BE-022-02",
     "verdict": "approve",
-    "summary": "BE-022-01 meets acceptance criteria. The controller creates owner-bound conversations using guard-established identity, returns HTTP 201 with an explicit contract-compatible projection, and uses safe error envelopes. Changes are confined to allowed paths and preserve architecture boundaries. Harness build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T17:25:11Z",
+    "summary": "The complete diff meets BE-022-02 requirements: authenticated ownership checks precede idempotency lookup, synchronous submission creates and enqueues one task, and responses use safe contract projections. Changes stay within allowed paths and preserve architecture boundaries. Harness build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T17:31:04Z",
     "provider": "codex"
   },
   "notes": [
@@ -51,7 +52,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 29,
+    "slot": 30,
     "last_provider": "codex",
     "claude_review_every": 0
   }

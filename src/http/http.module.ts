@@ -8,10 +8,11 @@ import { EventModule } from '../events/event.module';
 import { AgentsController } from './agents.controller';
 import { ApprovalDecisionsController } from './approval-decisions.controller';
 import { ConversationEventsController } from './conversation-events.controller';
+import { ConversationMessagesController } from './conversation-messages.controller';
 import { ConversationsController } from './conversations.controller';
 
 @Module({
   imports: [AuthModule, ConversationModule, EventModule, AgentRegistryModule, ApprovalModule],
-  controllers: [ConversationEventsController, AgentsController, ApprovalDecisionsController, ConversationsController],
+  controllers: [ConversationEventsController, AgentsController, ApprovalDecisionsController, ConversationsController, ConversationMessagesController],
 })
 export class HttpModule {}

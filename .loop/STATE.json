@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 59,
+  "iteration": 60,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -63,14 +63,15 @@
     "BE-025-03",
     "BE-025-04",
     "BE-025-05",
-    "BE-025-06"
+    "BE-025-06",
+    "BE-025-07"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-025-06",
+    "task_id": "BE-025-07",
     "verdict": "approve",
-    "summary": "BE-025-06 meets acceptance criteria: correlationId is validated before agent invocation and propagated unchanged, matching SupervisorTaskProcessor. Sanitized failures, outcome mappings, and execution boundaries are preserved. Only the allowed file changed. Harness build and full-tree layering checks passed. Runtime verification remains pending human review.",
-    "reviewed_at": "2026-09-14T20:52:03Z",
+    "summary": "BE-025-07 meets the acceptance criteria and architecture requirements. Lifecycle events use empty payloads and trusted metadata, preserve existing outcome mappings, and stay within authorized files. Harness build and full-tree layering checks passed. Runtime verification remains deferred to human review under D-024.",
+    "reviewed_at": "2026-09-14T20:54:44Z",
     "provider": "codex"
   },
   "notes": [
@@ -81,7 +82,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 61,
+    "slot": 62,
     "last_provider": "codex",
     "claude_review_every": 0
   }

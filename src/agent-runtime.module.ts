@@ -5,6 +5,8 @@ import { AgentRegistryModule } from './agents/registry/agent-registry.module';
 import { AgentRegistryService } from './agents/registry/agent-registry.service';
 import { SupervisorAgent } from './agents/supervisor/supervisor.agent';
 import { loadRuntimeConfig } from './config/runtime-config';
+import { EventBusService } from './events/event-bus.service';
+import { EventModule } from './events/event.module';
 import { createDemoProviderRegistry } from './llm/create-demo-provider-registry';
 import type { LlmProvider } from './llm/llm-provider';
 import { HotelSearchTaskProcessor } from './tasks/hotel-search-task-processor';
@@ -17,7 +19,7 @@ import { ToolRegistry } from './tools/tool-registry';
 import { ToolModule } from './tools/tool.module';
 
 @Module({
-  imports: [TaskModule, AgentRegistryModule, ToolModule],
+  imports: [TaskModule, AgentRegistryModule, ToolModule, EventModule],
 })
 export class AgentRuntimeModule implements OnModuleInit {
   constructor(
@@ -26,6 +28,7 @@ export class AgentRuntimeModule implements OnModuleInit {
     private readonly delegation: TaskDelegationService,
     private readonly tools: ToolRegistry,
     private readonly invoker: ToolInvoker,
+    private readonly eventBus: EventBusService,
   ) {}
 
   onModuleInit(): void {
@@ -68,7 +71,7 @@ export class AgentRuntimeModule implements OnModuleInit {
     );
     this.processors.register(
       hotelSearch.descriptor.name,
-      new HotelSearchTaskProcessor(hotelSearch),
+      new HotelSearchTaskProcessor(hotelSearch, this.eventBus),
     );
   }
 }

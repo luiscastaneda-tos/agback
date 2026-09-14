@@ -1,4 +1,5 @@
-import type { HotelSearchAgent } from '../agents/hotel-search/hotel-search.agent';
+import type { HotelSearchAgent, HotelSearchAgentOutcome } from '../agents/hotel-search/hotel-search.agent';
+import type { EventBusService } from '../events/event-bus.service';
 import type { ToolContext } from '../tools/agent-runtime';
 import type { AgentTask } from './agent-task';
 import type {
@@ -8,7 +9,10 @@ import type {
 } from './task-processor';
 
 export class HotelSearchTaskProcessor implements TaskProcessor {
-  constructor(private readonly hotelSearch: HotelSearchAgent) {}
+  constructor(
+    private readonly hotelSearch: HotelSearchAgent,
+    private readonly eventBus: EventBusService,
+  ) {}
 
   async process(
     task: AgentTask,
@@ -33,9 +37,24 @@ export class HotelSearchTaskProcessor implements TaskProcessor {
           ? {}
           : { approvalId: task.activeApprovalId }),
       };
-      const outcome = await this.hotelSearch.run(task.goal, toolContext);
+      const lifecycle = {
+        conversationId: task.conversationId,
+        taskId: task.id,
+        agentName: 'HotelSearchAgent',
+        correlationId: context.correlationId,
+        payload: {},
+      };
+      let outcome: HotelSearchAgentOutcome;
+      this.eventBus.publish({ ...lifecycle, type: 'agent.started' });
+      try {
+        outcome = await this.hotelSearch.run(task.goal, toolContext);
+      } catch {
+        this.eventBus.publish({ ...lifecycle, type: 'agent.failed' });
+        return this.failure();
+      }
       switch (outcome.kind) {
         case 'completed':
+          this.eventBus.publish({ ...lifecycle, type: 'agent.completed' });
           return {
             kind: 'completed',
             result: {
@@ -71,6 +90,7 @@ export class HotelSearchTaskProcessor implements TaskProcessor {
               return this.failure();
           }
         case 'failed':
+          this.eventBus.publish({ ...lifecycle, type: 'agent.failed' });
           if (outcome.code === 'AUTH_CONTEXT_EXPIRED') {
             return {
               kind: 'failed',

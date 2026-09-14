@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 27,
+  "iteration": 28,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -31,14 +31,15 @@
     "BE-017-01",
     "BE-015-01",
     "BE-019-01",
-    "BE-020-01"
+    "BE-020-01",
+    "BE-021-01"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-020-01",
+    "task_id": "BE-021-01",
     "verdict": "approve",
-    "summary": "The complete diff meets BE-020-01 acceptance criteria and architecture requirements. Delegation remains inert and restricted to HotelSearchAgent, runtime validation rejects invalid decisions, and failures are sanitized. Only the allowed file is added. Harness build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T17:20:54Z",
+    "summary": "The change meets BE-021-01 acceptance criteria within the two allowed files. Delegation validates the stored parent, inherits its bindings, queues the child without awaiting execution, and publishes only operational identifiers. No architecture or security violations found. Harness build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T17:23:09Z",
     "provider": "codex"
   },
   "notes": [
@@ -49,7 +50,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 27,
+    "slot": 28,
     "last_provider": "codex",
     "claude_review_every": 0
   }

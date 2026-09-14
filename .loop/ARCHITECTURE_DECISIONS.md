@@ -597,6 +597,63 @@ Before requeueing a task:
 - Current task packet `BE-024-03` is not silently broadened.
 - The Architect is authorized to emit a dedicated subtask (e.g. `BE-024-03B`) with `allowed_paths` covering `src/approvals/`, `src/tasks/`, and any strictly necessary minimal wiring to connect approved decisions to task requeueing.
 
+### Clarification (2026-09-14) - activeApprovalId lifecycle and task store preservation
+
+Recorded while resolving the BE-024-03B HUMAN_GATE on 2026-09-14.
+Freezes the lifecycle, clean-up rules, security constraints, and harness scope
+for preserving `activeApprovalId` in `InMemoryTaskStore`.
+
+#### 1. Preservation across State Transitions
+`activeApprovalId` must be preserved through:
+```text
+awaiting_human_approval -> queued -> running
+```
+This enables the resumed task processor to supply `activeApprovalId` to `ToolInvoker -> ApprovalEngine`, ensuring it validates and consumes the exact approval that triggered the resumption.
+
+#### 2. End-to-End Lifecycle
+```text
+approval pending
+  -> owner approves
+  -> task requeued (activeApprovalId preserved)
+  -> task running (activeApprovalId preserved)
+  -> ToolInvoker validates:
+       approval.id === activeApprovalId
+       approval.taskId === task.id
+       payloadHash matches material arguments
+       approval.status === 'approved'
+       approval not consumed
+  -> ApprovalEngine consumes approval
+  -> activeApprovalId cleared
+  -> Executor executes action
+```
+Do not retain `activeApprovalId` unnecessarily until task completion if the approval has already been consumed successfully.
+
+#### 3. Clearing Conditions
+`activeApprovalId` must be cleared whenever any of the following conditions occurs:
+- Approval is successfully consumed;
+- Task reaches a terminal state (`completed`, `failed`, or `cancelled`);
+- Approval transitions to `superseded`;
+- A new approval request replaces the prior approval.
+
+If the task enters `queued` or `running` due to an approved resumption and the approval has not yet been consumed, `InMemoryTaskStore` must retain `activeApprovalId`.
+
+#### 4. Security
+- Possessing `activeApprovalId` alone does NOT authorize execution.
+- `ToolInvoker` / `ApprovalEngine` must still strictly verify:
+  - `approval.taskId === task.id`
+  - `activeApprovalId === approval.id`
+  - `payloadHash` matches
+  - `approval.status === 'approved'`
+  - Approval is not consumed
+- If any check fails -> fail closed -> no Executor dispatch.
+
+#### 5. Harness Scope for BE-024-03B
+- The Architect is authorized to include in `allowed_paths`:
+  - `src/tasks/in-memory-task.store.ts`
+  - `src/approvals/`
+  plus only the minimal wiring strictly required by the subtask.
+- `src/tasks/` must NOT be placed in `forbidden_paths` for this packet.
+
 ## OPEN - escalate, never invent
 
 ### Q-001 - Durable persistence and retention

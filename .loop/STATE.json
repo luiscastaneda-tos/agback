@@ -1,7 +1,7 @@
 {
   "project": "noktos-agent-backend",
   "version": 1,
-  "status": "RUNNING",
+  "status": "READY_FOR_HUMAN_REVIEW",
   "iteration": 63,
   "current_task": null,
   "completed_tasks": [

@@ -69,6 +69,16 @@ export class HotelSearchTaskProcessor implements TaskProcessor {
               return this.failure();
           }
         case 'failed':
+          if (outcome.code === 'AUTH_CONTEXT_EXPIRED') {
+            return {
+              kind: 'failed',
+              failure: {
+                code: 'AUTH_CONTEXT_EXPIRED',
+                message: 'Authentication expired. Authenticate again.',
+              },
+            };
+          }
+          return this.failure();
         default:
           return this.failure();
       }

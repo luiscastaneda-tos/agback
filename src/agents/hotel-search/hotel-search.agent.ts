@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import type { LlmMessage, LlmProvider } from '../../llm/llm-provider';
 import type { AgentRuntime, ToolContext, ToolOutcome } from '../../tools/agent-runtime';
+import { ToolInvocationFailure } from '../../tools/agent-runtime';
 import type { ToolHandle } from '../../tools/tool-handle';
 import type { AgentDescriptor } from '../agent-descriptor';
 
@@ -44,6 +45,7 @@ export type HotelSearchAgentOutcome =
       | 'MALFORMED_OUTPUT'
       | 'TOOL_NOT_ALLOWED'
       | 'TOOL_FAILED'
+      | 'AUTH_CONTEXT_EXPIRED'
       | 'INVALID_SEARCH_RESULT'
       | 'ITERATION_LIMIT'
   };
@@ -126,8 +128,17 @@ export class HotelSearchAgent {
         if (call.name !== SEARCH_TOOL) {
           return { kind: 'failed', code: 'TOOL_NOT_ALLOWED' };
         }
+        let outcome: ToolOutcome;
         try {
-          const outcome = await this.runtime.invoke(call.name, call.arguments, context);
+          outcome = await this.runtime.invoke(call.name, call.arguments, context);
+        } catch (error) {
+          return {
+            kind: 'failed',
+            code: error instanceof ToolInvocationFailure && error.code === 'AUTH_CONTEXT_EXPIRED'
+              ? 'AUTH_CONTEXT_EXPIRED' : 'TOOL_FAILED',
+          };
+        }
+        try {
           switch (outcome.kind) {
             case 'awaiting_approval':
             case 'rejected':

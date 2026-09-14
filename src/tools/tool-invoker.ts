@@ -162,7 +162,27 @@ export class ToolInvoker implements AgentRuntime {
       expiresAt: credential.expiresAt,
     };
     try {
-      return { kind: 'completed', data: await executor.execute(parsed.data, executionContext) };
+      this.events.publish({
+        type: 'tool.called',
+        conversationId: conversation.id,
+        taskId: task.id,
+        agentName: task.agentName,
+        correlationId: ctx.correlationId ?? task.id,
+        payload: {
+          action: definition.name,
+          argsPreview: definition.toPreview(parsed.data).map(({ label, value }) => ({ label, value })),
+        },
+      });
+      const data = await executor.execute(parsed.data, executionContext);
+      this.events.publish({
+        type: 'tool.completed',
+        conversationId: conversation.id,
+        taskId: task.id,
+        agentName: task.agentName,
+        correlationId: ctx.correlationId ?? task.id,
+        payload: { action: definition.name },
+      });
+      return { kind: 'completed', data };
     } catch {
       throw new ToolInvocationFailure('TOOL_ERROR');
     }

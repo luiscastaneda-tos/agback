@@ -48,8 +48,12 @@ export class AgentRuntimeModule implements OnModuleInit {
     if (confirmationHandle === undefined) {
       throw new Error('Booking confirmation tool is not registered.');
     }
+    const cancellationHandle = this.tools.getHandle('cancel_booking');
+    if (cancellationHandle === undefined) {
+      throw new Error('Booking cancellation tool is not registered.');
+    }
     const supervisor = new SupervisorAgent(
-      provider, config.llmModel, cartHandle, confirmationHandle, this.invoker,
+      provider, config.llmModel, cartHandle, confirmationHandle, cancellationHandle, this.invoker,
     );
     const hotelSearch = new HotelSearchAgent(
       provider, config.llmModel, searchHandle, this.invoker,

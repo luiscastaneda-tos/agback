@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 48,
+  "iteration": 49,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -52,14 +52,15 @@
     "BE-024-02",
     "BE-024-03B",
     "BE-024-04",
-    "BE-024-05"
+    "BE-024-05",
+    "BE-024-06"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-024-05",
+    "task_id": "BE-024-06",
     "verdict": "approve",
-    "summary": "The complete diff meets BE-024-05 acceptance criteria and stays within the four allowed files. Confirmation uses the existing runtime approval path, preserves resumption context and failure handling, and projects only validated mock results. Documentation accurately describes the standalone scenario. Harness build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T20:09:14Z",
+    "summary": "BE-024-06 meets acceptance criteria within the four allowed files. Cancellation uses the existing execution chokepoint, preserves approval and resumed-task context, validates and projects mock results, and retains explicit failure handling. Documentation accurately describes the standalone fictional flow and pending fixtures. Harness build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T20:11:56Z",
     "provider": "codex"
   },
   "notes": [
@@ -70,7 +71,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 49,
+    "slot": 50,
     "last_provider": "codex",
     "claude_review_every": 0
   }

@@ -73,6 +73,19 @@ export class SupervisorTaskProcessor implements TaskProcessor {
               summary: 'Fictional mock booking confirmed after owner approval.',
             },
           };
+        case 'cancellation_completed':
+          return {
+            kind: 'completed',
+            result: {
+              kind: 'answer',
+              data: {
+                mock: outcome.data.mock,
+                bookingId: outcome.data.bookingId,
+                status: outcome.data.status,
+              },
+              summary: 'Fictional mock booking cancelled after owner approval.',
+            },
+          };
         case 'stopped':
           switch (outcome.outcome.kind) {
             case 'awaiting_approval':

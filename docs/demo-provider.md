@@ -53,8 +53,8 @@ only history after the latest user message; no shared conversation state exists.
 Reservation calls remain subject to schema validation, policy and mandatory
 human approval through the existing runtime chokepoint. This provider neither
 grants approval nor claims execution. SupervisorAgent offers delegation and the
-registered `add_reservation_to_cart` and `confirm_booking` handles through
-AgentRuntime. HotelSearchAgent remains search-only. Neither agent offers cancellation.
+registered `add_reservation_to_cart`, `confirm_booking` and `cancel_booking`
+handles through AgentRuntime. HotelSearchAgent remains search-only.
 
 `AppModule` imports `AgentRuntimeModule`, which registers both agent descriptors
 and their existing task processors during initialization, before HTTP traffic is
@@ -154,7 +154,46 @@ key does not resume execution. Changed material arguments require a replacement
 approval; authentication expiry remains `AUTH_CONTEXT_EXPIRED` and requires
 authentication again.
 
-Cancellation remains a provider intent example with its message flow pending. Recorded runtime SSE fixtures are also pending; future fixtures
+To run the implemented cancellation flow, use the same authenticated conversation
+owner and endpoints as above:
+
+1. Submit to `POST /conversations/:id/messages`:
+
+   ```json
+   { "content": "demo:cancel-booking", "clientMessageId": "00000000-0000-4000-8000-000000000007" }
+   ```
+
+   This scenario uses standalone synthetic booking input `fictional-booking-1`,
+   fictional traveler `fictional-traveler-1` / `Fictional Demo Traveler`, and reason
+   `Fictional demo cancellation`. It does not use a previous confirmation result
+   or require the cart or confirmation scenarios.
+2. After the 202 response, observe SSE or the tasks and approvals endpoints.
+   The task pauses as `awaiting_human_approval`; review the allowlisted booking ID,
+   traveler and cancellation reason. No cancellation has executed at this point.
+3. As the owner, submit to `POST /approvals/:id/decision` with this pending
+   cancellation approval ID:
+
+   ```json
+   { "decision": "approve", "idempotencyKey": "00000000-0000-4000-8000-000000000008" }
+   ```
+
+   Reuse the same key for retries. Approval automatically requeues the paused
+   task once, preserving its active approval ID; no manual resume is needed.
+4. The resumed processor passes that ID through AgentRuntime to ToolInvoker.
+   Existing approval binding, material fields, expiry and single-use checks
+   precede executor dispatch. Only a completed, validated cancellation outcome
+   yields `{ "mock": true, "bookingId": "fictional-booking-1", "status": "cancelled" }`
+   in the task result, with a fictional mock cancellation summary. Provider text
+   never supplies cancellation success. Observe completion over SSE or the tasks
+   endpoint.
+
+Rejecting the cancellation with `"decision": "reject"` and its own idempotency key
+does not resume execution. Changed material arguments require a replacement
+approval; authentication expiry remains `AUTH_CONTEXT_EXPIRED` and requires
+authentication again. Malformed tool results fail with `TOOL_ERROR`; rejected or
+forbidden invocations retain `APPROVAL_REJECTED` or `POLICY_FORBIDDEN` failures.
+
+Recorded runtime SSE fixtures remain pending; future fixtures
 must be captured from actual runtime execution, never fabricated.
 Everything described here is fictional demo behavior, with no production
 readiness claim.

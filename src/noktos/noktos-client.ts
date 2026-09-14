@@ -37,8 +37,26 @@ export interface AddReservationToCartResponse {
   status: 'added';
 }
 
+/** Internal confirmation types; not shared wire contracts. */
+export interface ConfirmBookingInput {
+  cartItemId: string;
+  /** Binding identifier for execution and audit. */
+  travelerId: string;
+  /** Human display data only. */
+  travelerName: string;
+  totalPrice: number;
+  currency: string;
+}
+
+export interface ConfirmBookingResponse {
+  mock: true;
+  bookingId: string;
+  status: 'confirmed';
+}
+
 /** Internal client seam for authorized executors. */
 export interface NoktosClient {
   searchHotels(input: HotelSearchInput): Promise<HotelSearchResponse>;
   addReservationToCart(input: AddReservationToCartInput): Promise<AddReservationToCartResponse>;
+  confirmBooking(input: ConfirmBookingInput): Promise<ConfirmBookingResponse>;
 }

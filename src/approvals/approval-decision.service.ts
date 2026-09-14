@@ -64,7 +64,7 @@ export class ApprovalDecisionService {
     const key = JSON.stringify([userId, approvalId, parsed.data.idempotencyKey]);
     const cached = this.results.get(key);
     if (cached !== undefined) {
-      this.reconcileRejectedApproval(approvalId);
+      this.reconcileApproval(approvalId);
       return structuredClone(cached);
     }
 
@@ -81,14 +81,20 @@ export class ApprovalDecisionService {
     }
 
     this.results.set(key, structuredClone(result));
-    this.reconcileRejectedApproval(approvalId);
+    this.reconcileApproval(approvalId);
     return structuredClone(result);
   }
 
-  private reconcileRejectedApproval(approvalId: string): void {
+  private reconcileApproval(approvalId: string): void {
     // Reconcile current storage state, never the cached decision snapshot.
     const approval = this.approvals.findById(approvalId);
-    if (approval === undefined || approval.status !== 'rejected') return;
+    if (approval === undefined) return;
+
+    const expired = approval.status === 'expired' || (
+      approval.status === 'approved' &&
+      Date.parse(approval.expiresAt) <= Date.now()
+    );
+    if (approval.status !== 'rejected' && !expired) return;
 
     const task = this.tasks.findById(approval.taskId);
     if (
@@ -103,7 +109,9 @@ export class ApprovalDecisionService {
 
     this.tasks.fail(
       task.id,
-      { code: 'APPROVAL_REJECTED', message: 'Approval was rejected.' },
+      expired
+        ? { code: 'APPROVAL_EXPIRED', message: 'Approval has expired.' }
+        : { code: 'APPROVAL_REJECTED', message: 'Approval was rejected.' },
       randomUUID(),
     );
   }

@@ -1,5 +1,6 @@
 import type { Executor } from './executor';
 import { AddReservationToCartExecutor } from './executors/add-reservation-to-cart.executor';
+import { CancelBookingExecutor } from './executors/cancel-booking.executor';
 import { ConfirmBookingExecutor } from './executors/confirm-booking.executor';
 import { SearchHotelsExecutor } from './executors/search-hotels.executor';
 
@@ -14,6 +15,7 @@ export class ExecutorRegistry {
     this.register('search_hotels', new SearchHotelsExecutor());
     this.register('add_reservation_to_cart', new AddReservationToCartExecutor());
     this.register('confirm_booking', new ConfirmBookingExecutor());
+    this.register('cancel_booking', new CancelBookingExecutor());
   }
 
   register<TArgs>(executorKey: string, executor: Executor<TArgs>): void {

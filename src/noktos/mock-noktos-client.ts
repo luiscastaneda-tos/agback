@@ -3,6 +3,8 @@ import { createHash } from 'node:crypto';
 import type {
   AddReservationToCartInput,
   AddReservationToCartResponse,
+  CancelBookingInput,
+  CancelBookingResponse,
   ConfirmBookingInput,
   ConfirmBookingResponse,
   HotelSearchInput,
@@ -32,6 +34,16 @@ const FICTIONAL_HOTELS: readonly Readonly<HotelSearchResult>[] = [
 
 /** Fictional demo adapter only; no credentials or live integration. */
 export class MockNoktosClient implements NoktosClient {
+  async cancelBooking(input: CancelBookingInput): Promise<CancelBookingResponse> {
+    console.info('[MOCK] Noktos booking cancellation adapter invoked.');
+
+    return {
+      mock: true,
+      bookingId: input.bookingId,
+      status: 'cancelled',
+    };
+  }
+
   async confirmBooking(input: ConfirmBookingInput): Promise<ConfirmBookingResponse> {
     console.info('[MOCK] Noktos booking confirmation adapter invoked.');
 

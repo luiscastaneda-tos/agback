@@ -54,9 +54,26 @@ export interface ConfirmBookingResponse {
   status: 'confirmed';
 }
 
+/** Internal cancellation types; not shared wire contracts. */
+export interface CancelBookingInput {
+  bookingId: string;
+  /** Binding identifier for execution and audit. */
+  travelerId: string;
+  /** Human display data only. */
+  travelerName: string;
+  reason?: string;
+}
+
+export interface CancelBookingResponse {
+  mock: true;
+  bookingId: string;
+  status: 'cancelled';
+}
+
 /** Internal client seam for authorized executors. */
 export interface NoktosClient {
   searchHotels(input: HotelSearchInput): Promise<HotelSearchResponse>;
   addReservationToCart(input: AddReservationToCartInput): Promise<AddReservationToCartResponse>;
   confirmBooking(input: ConfirmBookingInput): Promise<ConfirmBookingResponse>;
+  cancelBooking(input: CancelBookingInput): Promise<CancelBookingResponse>;
 }

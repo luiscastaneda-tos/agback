@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 12,
+  "iteration": 13,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -16,14 +16,15 @@
     "BE-008-01",
     "BE-009-01",
     "BE-010-01",
-    "BE-011-01"
+    "BE-011-01",
+    "BE-012-01"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-011-01",
+    "task_id": "BE-012-01",
     "verdict": "approve",
-    "summary": "The complete diff meets BE-011-01 acceptance criteria and architecture rules. Only the two allowed utilities are added; canonical serialization and material selection preserve the required approval binding and reject unsupported data with generic errors. Harness build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T16:31:55Z",
+    "summary": "The two authorized files meet BE-012-01: contract-compatible internal models, pending creation, configurable validated TTL, irreversible expiry on reads, and defensive copying. No execution capability or architectural violations introduced. Harness build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T16:34:19Z",
     "provider": "codex"
   },
   "notes": [
@@ -34,7 +35,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 12,
+    "slot": 13,
     "last_provider": "codex",
     "claude_review_every": 0
   }

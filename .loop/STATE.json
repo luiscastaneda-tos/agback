@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 49,
+  "iteration": 50,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -53,14 +53,15 @@
     "BE-024-03B",
     "BE-024-04",
     "BE-024-05",
-    "BE-024-06"
+    "BE-024-06",
+    "BE-024-07"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-024-06",
+    "task_id": "BE-024-07",
     "verdict": "approve",
-    "summary": "BE-024-06 meets acceptance criteria within the four allowed files. Cancellation uses the existing execution chokepoint, preserves approval and resumed-task context, validates and projects mock results, and retains explicit failure handling. Documentation accurately describes the standalone fictional flow and pending fixtures. Harness build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T20:11:56Z",
+    "summary": "The change meets BE-024-07 acceptance criteria and stays within the three authorized files. Authenticated capture preserves original SSE frames, correlates both task completions, protects credential input, and accurately documents fixture provenance. Harness build and full-tree layering checks passed. No runtime capture was independently executed.",
+    "reviewed_at": "2026-09-14T20:16:14Z",
     "provider": "codex"
   },
   "notes": [
@@ -71,7 +72,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 50,
+    "slot": 51,
     "last_provider": "codex",
     "claude_review_every": 0
   }

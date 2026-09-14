@@ -195,5 +195,10 @@ forbidden invocations retain `APPROVAL_REJECTED` or `POLICY_FORBIDDEN` failures.
 
 Recorded runtime SSE fixtures remain pending; future fixtures
 must be captured from actual runtime execution, never fabricated.
+The dependency-free [hotel delegation capture utility](../fixtures/README.md)
+records authenticated runtime SSE with hidden interactive credential input and
+waits for both the submitted supervisor and its delegated hotel-search child.
+Providing this utility does not constitute a recorded fixture or an executed
+capture. Its output preserves runtime IDs and timestamps, which vary per run.
 Everything described here is fictional demo behavior, with no production
 readiness claim.

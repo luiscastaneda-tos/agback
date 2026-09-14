@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 16,
+  "iteration": 17,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -20,14 +20,15 @@
     "BE-012-01",
     "BE-012-02",
     "BE-012-03",
-    "BE-012-04"
+    "BE-012-04",
+    "BE-013-01"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-012-04",
+    "task_id": "BE-013-01",
     "verdict": "approve",
-    "summary": "BE-012-04 meets acceptance criteria and architecture requirements. Supersession checks eligibility and binding, prepares detached snapshots before mutation, preserves audit metadata, and creates one pending replacement with configured TTL. Only allowed files changed. Harness build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T16:44:00Z",
+    "summary": "The change meets BE-013-01 acceptance criteria and architecture rules. Active authentication and ownership checks precede cache disclosure and decision recording; scoped idempotency returns detached results, and lifecycle changes remain delegated to the approval store. Only the allowed file is added. Harness build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T16:46:26Z",
     "provider": "codex"
   },
   "notes": [
@@ -38,7 +39,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 16,
+    "slot": 17,
     "last_provider": "codex",
     "claude_review_every": 0
   }

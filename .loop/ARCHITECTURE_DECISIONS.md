@@ -547,6 +547,56 @@ Swapping to a production LLM provider in a future release requires solely adding
 The recorded event fixtures generated for `BE-024` must be captured directly from real runtime executions of the V1 pipeline running with `DemoScriptedLlmProvider`. Event streams must never be manually fabricated or edited outside actual runtime execution.
 No external OpenAI, Gemini, or third-party generative SDKs or secrets are permitted in this closure.
 
+## D-022 - Approved decision task requeueing and resumption
+
+Recorded while resolving the BE-024-03 HUMAN_GATE on 2026-09-14.
+Freezes the flow, preconditions, idempotency, and execution chokepoints for
+automatically resuming paused tasks upon owner approval.
+
+### 1. Resumption Flow
+When an `ApprovalRequest` is resolved as `decision = approved` by the legitimate
+conversation owner, the backend must automatically resume the paused task.
+No additional manual trigger or action from the frontend is required.
+
+```text
+approval pending
+  -> owner approves (POST /approvals/:id/decision)
+  -> approval.status = approved
+  -> task in awaiting_human_approval
+  -> task requeue (TaskService.requeue)
+  -> TaskQueue enqueue (TaskQueueService.enqueue)
+  -> task processor resumes
+  -> supplies activeApprovalId
+  -> ToolInvoker
+  -> ApprovalEngine validates & consumes approval
+  -> ExecutorRegistry
+  -> Executor
+```
+
+### 2. Mandatory Preconditions
+Before requeueing a task:
+- The approval must belong to the task (`approval.taskId === task.id`).
+- The task must be strictly in `status === 'awaiting_human_approval'`.
+- `task.activeApprovalId` must match the resolved approval ID (`task.activeApprovalId === approval.id`).
+- The approval cannot be `expired`, `rejected`, `superseded`, or already consumed.
+- The decision must have been authorized by the legitimate owner under existing authorization rules.
+- **Fail Closed**: If any precondition fails, halt immediately: no requeue and no executor dispatch.
+
+### 3. Idempotency & Concurrency
+- A valid approval produces at most one requeue.
+- Repeated calls to `POST /approvals/:id/decision` with the same decision and idempotency key must not enqueue duplicate entries into `TaskQueue`.
+- If the task is already in `queued`, `running`, `completed`, `failed`, or `cancelled`, do not re-enqueue it.
+- The state transition `awaiting_human_approval -> queued` is the deterministic single-winner gate.
+
+### 4. Approval Consumption at Chokepoint
+- Requeueing a task does NOT execute the underlying tool action.
+- The approval is consumed strictly when the resumed processor invokes `ToolInvoker -> ApprovalEngine` and validates `activeApprovalId` + `payloadHash`.
+- If material fields changed: the pending approval transitions to `superseded`, and a new mandatory approval is requested; previous approvals must never be reused.
+
+### 5. Harness Task Scope
+- Current task packet `BE-024-03` is not silently broadened.
+- The Architect is authorized to emit a dedicated subtask (e.g. `BE-024-03B`) with `allowed_paths` covering `src/approvals/`, `src/tasks/`, and any strictly necessary minimal wiring to connect approved decisions to task requeueing.
+
 ## OPEN - escalate, never invent
 
 ### Q-001 - Durable persistence and retention

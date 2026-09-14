@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 53,
+  "iteration": 54,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -57,14 +57,15 @@
     "BE-024-07",
     "BE-024-07B",
     "BE-024-07C",
-    "BE-024-08A"
+    "BE-024-08A",
+    "BE-025-01"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-024-08A",
+    "task_id": "BE-025-01",
     "verdict": "approve",
-    "summary": "The change meets BE-024-08A acceptance criteria and stays within allowed paths. Approval requires explicit human confirmation; capture validates the correlated approval lifecycle and preserves original SSE bytes with exclusive output creation. Credential safeguards and architecture boundaries remain intact. Harness build and full-tree layering checks passed. Actual authenticated runtime capture remains pending, as documented.",
-    "reviewed_at": "2026-09-14T20:32:40Z",
+    "summary": "The diff adds only docs/HUMAN_REVIEW.md and meets BE-025-01 acceptance criteria. It documents the required manual capture procedure, pending checks, implementation gaps, and demo limitations without claiming production readiness. Harness verification reports successful build and full-tree layering checks. No architecture or security boundary changes are introduced.",
+    "reviewed_at": "2026-09-14T20:40:59Z",
     "provider": "codex"
   },
   "notes": [
@@ -75,7 +76,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 55,
+    "slot": 56,
     "last_provider": "codex",
     "claude_review_every": 0
   }

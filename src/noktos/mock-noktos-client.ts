@@ -1,4 +1,8 @@
+import { createHash } from 'node:crypto';
+
 import type {
+  AddReservationToCartInput,
+  AddReservationToCartResponse,
   HotelSearchInput,
   HotelSearchResponse,
   HotelSearchResult,
@@ -24,8 +28,32 @@ const FICTIONAL_HOTELS: readonly Readonly<HotelSearchResult>[] = [
   },
 ];
 
-/** In-memory fictional search only; no credentials or live availability. */
+/** Fictional demo adapter only; no credentials or live integration. */
 export class MockNoktosClient implements NoktosClient {
+  async addReservationToCart(
+    input: AddReservationToCartInput,
+  ): Promise<AddReservationToCartResponse> {
+    console.info('[MOCK] Noktos cart adapter invoked.');
+
+    // Fixed field order makes the synthetic identifier independent of key order.
+    const reservation = JSON.stringify([
+      input.hotelId,
+      input.hotelName,
+      input.checkIn,
+      input.checkOut,
+      input.travelerId,
+      input.travelerName,
+      input.rooms,
+      input.totalPrice,
+      input.currency,
+    ]);
+    return {
+      mock: true,
+      cartItemId: `mock-cart-${createHash('sha256').update(reservation).digest('hex')}`,
+      status: 'added',
+    };
+  }
+
   async searchHotels(input: HotelSearchInput): Promise<HotelSearchResponse> {
     console.info('[MOCK] Noktos hotel search adapter invoked.');
 

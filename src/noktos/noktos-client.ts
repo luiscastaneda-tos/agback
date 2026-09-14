@@ -16,7 +16,29 @@ export interface HotelSearchResponse {
   hotels: HotelSearchResult[];
 }
 
-/** Search-only seam for future authorized executors. */
+/** Internal cart types; rooms is required after tool schema defaulting. */
+export interface AddReservationToCartInput {
+  hotelId: string;
+  hotelName: string;
+  checkIn: string;
+  checkOut: string;
+  /** Binding identifier for execution and audit. */
+  travelerId: string;
+  /** Human display data only. */
+  travelerName: string;
+  rooms: number;
+  totalPrice: number;
+  currency: string;
+}
+
+export interface AddReservationToCartResponse {
+  mock: true;
+  cartItemId: string;
+  status: 'added';
+}
+
+/** Internal client seam for authorized executors. */
 export interface NoktosClient {
   searchHotels(input: HotelSearchInput): Promise<HotelSearchResponse>;
+  addReservationToCart(input: AddReservationToCartInput): Promise<AddReservationToCartResponse>;
 }

@@ -1,4 +1,5 @@
 import type { Executor } from './executor';
+import { AddReservationToCartExecutor } from './executors/add-reservation-to-cart.executor';
 import { SearchHotelsExecutor } from './executors/search-hotels.executor';
 
 /**
@@ -10,6 +11,7 @@ export class ExecutorRegistry {
 
   constructor() {
     this.register('search_hotels', new SearchHotelsExecutor());
+    this.register('add_reservation_to_cart', new AddReservationToCartExecutor());
   }
 
   register<TArgs>(executorKey: string, executor: Executor<TArgs>): void {

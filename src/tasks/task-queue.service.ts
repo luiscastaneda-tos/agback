@@ -113,6 +113,7 @@ export class TaskQueueService {
     try {
       const outcome: unknown = await processor.process(
         structuredClone(runningTask),
+        { correlationId: entry.correlationId },
       );
       this.applyOutcome(entry, outcome);
     } catch {

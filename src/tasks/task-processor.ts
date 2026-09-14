@@ -7,8 +7,15 @@ export type TaskProcessorOutcome =
   | { kind: 'awaiting_human_approval'; activeApprovalId: string }
   | { kind: 'failed'; failure: TaskFailure };
 
+export interface TaskProcessorContext {
+  readonly correlationId: string;
+}
+
 export interface TaskProcessor {
-  process(task: AgentTask): Promise<TaskProcessorOutcome>;
+  process(
+    task: AgentTask,
+    context: TaskProcessorContext,
+  ): Promise<TaskProcessorOutcome>;
 }
 
 @Injectable()
@@ -23,4 +30,3 @@ export class TaskProcessorRegistry {
     return this.processors.get(agentName);
   }
 }
-

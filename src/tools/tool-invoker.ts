@@ -3,6 +3,7 @@ import type { InMemoryApprovalStore } from '../approvals/in-memory-approval.stor
 import type { AuthContextService, ExecutionCredentialResolver } from '../auth/auth-context.service';
 import { AuthenticationFailure } from '../auth/auth-token-verifier';
 import type { InMemoryConversationStore } from '../conversations/in-memory-conversation.store';
+import type { EventBusService } from '../events/event-bus.service';
 import type { ExecutionContext } from '../execution/execution-context';
 import { ExecutorRegistry } from '../execution/executor-registry';
 import { payloadHash } from '../policy/payload-hash';
@@ -23,10 +24,11 @@ export function createToolInvoker(
   conversations: InMemoryConversationStore,
   authContexts: AuthContextService,
   credentials: ExecutionCredentialResolver,
+  events: EventBusService,
 ): ToolInvoker {
   return new ToolInvoker(
     tools, policy, approvals, tasks, conversations, authContexts, credentials,
-    new ExecutorRegistry(),
+    new ExecutorRegistry(), events,
   );
 }
 
@@ -41,6 +43,7 @@ export class ToolInvoker implements AgentRuntime {
     private readonly authContexts: AuthContextService,
     private readonly credentials: ExecutionCredentialResolver,
     private readonly executors: ExecutorRegistry,
+    private readonly events: EventBusService,
   ) {}
 
   async invoke(toolName: string, args: unknown, ctx: ToolContext): Promise<ToolOutcome> {
@@ -114,8 +117,21 @@ export class ToolInvoker implements AgentRuntime {
       }
       if (approval.payloadHash !== hash) {
         const result = this.approvals.supersedeOnMismatch(approval.id, requestInput());
-        if (result.kind !== 'replaced' ||
-            !this.tasks.clearActiveApproval(task.id, approval.id)) {
+        if (result.kind !== 'replaced') {
+          return { kind: 'rejected', reason: 'Approval is unavailable.' };
+        }
+        this.events.publish({
+          type: 'approval.superseded',
+          conversationId: conversation.id,
+          taskId: task.id,
+          correlationId: ctx.correlationId ?? task.id,
+          payload: {
+            approvalId: approval.id,
+            status: 'superseded',
+            action: approval.action,
+          },
+        });
+        if (!this.tasks.clearActiveApproval(task.id, approval.id)) {
           return { kind: 'rejected', reason: 'Approval is unavailable.' };
         }
         return { kind: 'awaiting_approval', approvalId: result.replacement.id };

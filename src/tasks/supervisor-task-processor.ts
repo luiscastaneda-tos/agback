@@ -32,6 +32,7 @@ export class SupervisorTaskProcessor implements TaskProcessor {
       const toolContext: ToolContext = {
         taskId: task.id,
         conversationId: task.conversationId,
+        correlationId: context.correlationId,
         ...(task.activeApprovalId === undefined
           ? {}
           : { approvalId: task.activeApprovalId }),

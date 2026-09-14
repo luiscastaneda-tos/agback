@@ -2,6 +2,8 @@
 export interface ToolContext {
   readonly conversationId: string;
   readonly taskId: string;
+  /** Worker correlation when available; otherwise events correlate by task ID. */
+  readonly correlationId?: string;
   /** Trusted reference to a previously requested approval. */
   readonly approvalId?: string;
 }

@@ -1,19 +1,27 @@
 import { z } from 'zod';
 
 import type { LlmProvider } from '../../llm/llm-provider';
+import type { AgentRuntime, ToolContext, ToolOutcome } from '../../tools/agent-runtime';
+import { ToolInvocationFailure } from '../../tools/agent-runtime';
+import type { ToolHandle } from '../../tools/tool-handle';
 import type { AgentDescriptor } from '../agent-descriptor';
+
+const CART_TOOL = 'add_reservation_to_cart';
 
 const DELEGATION_INTENT = 'delegate_to_hotel_search';
 
 export const SUPERVISOR_SYSTEM_PROMPT = `You are SupervisorAgent, assisting with
-fictional mock hotels. Answer directly when no hotel search is needed, or ask
+fictional mock hotels. Answer directly when no action is needed, or ask
 for clarification when the goal is unclear. For hotel searches, request
 delegation exclusively to HotelSearchAgent using delegate_to_hotel_search with
-only a non-empty goal. Make at most one delegation request. This is an inert
-intent: it does not execute or wait for a search. Never claim that delegated
+only a non-empty goal. Delegation is an inert intent: it does not execute or
+wait for a search. Request at most one intent or tool call per run. Never claim that delegated
 work has completed. Clearly label hotel assistance as fictional mock data;
-never claim live availability or real bookings. Do not book, modify, or cancel
-reservations. Do not request other agents or tools.`;
+never claim live availability or real bookings. Use add_reservation_to_cart
+to request adding a fictional reservation to the cart.
+This requires owner approval before execution; never claim cart success while
+approval is pending. Do not confirm or cancel bookings. Do not request other
+agents or tools.`;
 
 const delegationArgsSchema = z.strictObject({
   goal: z.string().min(1).regex(/\S/),
@@ -28,21 +36,33 @@ const assistantOutputSchema = z.object({
   })).max(1),
 });
 
+const cartResultSchema = z.object({
+  mock: z.literal(true),
+  cartItemId: z.string().min(1),
+  status: z.literal('added'),
+});
+
 /** Internal decisions only; orchestration owns task creation and lifecycle. */
 export type SupervisorAgentOutcome =
   | { kind: 'completed'; text: string }
+  | { kind: 'cart_completed'; data: z.infer<typeof cartResultSchema> }
+  | { kind: 'stopped'; outcome: Exclude<ToolOutcome, { kind: 'completed' }> }
   | { kind: 'delegated'; agentName: 'HotelSearchAgent'; goal: string }
   | { kind: 'failed'; code:
       | 'INVALID_INPUT'
       | 'PROVIDER_FAILED'
       | 'MALFORMED_OUTPUT'
       | 'TOOL_NOT_ALLOWED'
+      | 'TOOL_FAILED'
+      | 'AUTH_CONTEXT_EXPIRED'
   };
 
 export class SupervisorAgent {
   constructor(
     private readonly provider: LlmProvider,
     private readonly model: string,
+    private readonly cartHandle: ToolHandle,
+    private readonly runtime: AgentRuntime,
   ) {}
 
   /** A fresh inert descriptor; lifecycle state is managed outside this core. */
@@ -50,17 +70,18 @@ export class SupervisorAgent {
     return {
       name: 'SupervisorAgent',
       displayName: 'Supervisor',
-      description: 'Answers questions or delegates fictional mock hotel searches.',
+      description: 'Answers questions, delegates mock hotel searches, or requests approval for fictional cart additions.',
       kind: 'supervisor',
       // Delegation is orchestration metadata, not a registered business tool.
-      toolNames: [],
+      toolNames: [CART_TOOL],
       status: 'idle',
     };
   }
 
-  async run(goal: string): Promise<SupervisorAgentOutcome> {
+  async run(goal: string, context: ToolContext): Promise<SupervisorAgentOutcome> {
     if (typeof goal !== 'string' || !goal.trim()
-      || typeof this.model !== 'string' || !this.model.trim()) {
+      || typeof this.model !== 'string' || !this.model.trim()
+      || this.cartHandle.name !== CART_TOOL) {
       return { kind: 'failed', code: 'INVALID_INPUT' };
     }
 
@@ -76,6 +97,10 @@ export class SupervisorAgent {
           name: DELEGATION_INTENT,
           description: 'Request a fictional mock hotel search by HotelSearchAgent.',
           argsSchema: z.toJSONSchema(delegationArgsSchema),
+        }, {
+          name: CART_TOOL,
+          description: this.cartHandle.description,
+          argsSchema: structuredClone(this.cartHandle.argsSchema),
         }],
       });
     } catch {
@@ -93,6 +118,37 @@ export class SupervisorAgent {
         return output.text.trim()
           ? { kind: 'completed', text: output.text }
           : { kind: 'failed', code: 'MALFORMED_OUTPUT' };
+      }
+      if (call.name === CART_TOOL) {
+        try {
+          const outcome = await this.runtime.invoke(CART_TOOL, call.arguments, context);
+          switch (outcome.kind) {
+            case 'awaiting_approval':
+            case 'rejected':
+            case 'forbidden':
+              return { kind: 'stopped', outcome };
+            case 'completed': {
+              const result = cartResultSchema.safeParse(outcome.data);
+              if (!result.success) return { kind: 'failed', code: 'TOOL_FAILED' };
+              return {
+                kind: 'cart_completed',
+                data: {
+                  mock: result.data.mock,
+                  cartItemId: result.data.cartItemId,
+                  status: result.data.status,
+                },
+              };
+            }
+            default:
+              return { kind: 'failed', code: 'TOOL_FAILED' };
+          }
+        } catch (error) {
+          return {
+            kind: 'failed',
+            code: error instanceof ToolInvocationFailure && error.code === 'AUTH_CONTEXT_EXPIRED'
+              ? 'AUTH_CONTEXT_EXPIRED' : 'TOOL_FAILED',
+          };
+        }
       }
       if (call.name !== DELEGATION_INTENT) {
         return { kind: 'failed', code: 'TOOL_NOT_ALLOWED' };

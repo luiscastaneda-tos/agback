@@ -52,9 +52,9 @@ only history after the latest user message; no shared conversation state exists.
 
 Reservation calls remain subject to schema validation, policy and mandatory
 human approval through the existing runtime chokepoint. This provider neither
-grants approval nor claims execution. SupervisorAgent still offers only
-delegation, and HotelSearchAgent only search; reservation scenarios therefore
-require a caller offering the corresponding handle and do not expand those agents.
+grants approval nor claims execution. SupervisorAgent offers delegation and the
+registered `add_reservation_to_cart` handle through AgentRuntime. HotelSearchAgent remains search-only. Confirmation
+and cancellation handles are not offered by either agent.
 
 `AppModule` imports `AgentRuntimeModule`, which registers both agent descriptors
 and their existing task processors during initialization, before HTTP traffic is
@@ -84,9 +84,42 @@ child with the `demo:hotel-search` goal, invokes `search_hotels` through
 `ToolInvoker`, and completes with a fictional summary. Sending `demo:hotel-search`
 directly to the supervisor produces clarification because it has no search handle.
 
-The reservation rows above describe provider intent examples only. They are not
-wired reservation flows through the message endpoint, and the full approval demo
-remains pending. Runtime SSE fixture capture is also pending; future event fixtures
+To run the implemented cart approval flow, use the same conversation owner’s
+`Authorization: Bearer <supabase_access_token>` header on every request, including
+SSE (use `fetch` + `ReadableStream`; never put the token in the URL).
+
+1. Submit to `POST /conversations/:id/messages`:
+
+   ```json
+   { "content": "demo:add-reservation-to-cart", "clientMessageId": "00000000-0000-4000-8000-000000000003" }
+   ```
+
+2. After the 202 response, observe `GET /conversations/:id/events` or inspect
+   `GET /conversations/:id/tasks` and `GET /conversations/:id/approvals`.
+   The supervisor task pauses as `awaiting_human_approval`. Review the approval’s
+   allowlisted `inputPreview`; no cart addition has executed at this point.
+3. As the conversation owner, submit to `POST /approvals/:id/decision` using
+   the pending approval ID:
+
+   ```json
+   { "decision": "approve", "idempotencyKey": "00000000-0000-4000-8000-000000000004" }
+   ```
+
+   Reuse that key when retrying the same decision. A valid approval automatically
+   requeues the paused task once; there is no manual resume request.
+4. The resumed supervisor passes the task’s existing approval ID to ToolInvoker,
+   which validates binding, material arguments, expiry and single-use consumption
+   before dispatch. Only a completed invocation produces the task result data
+   `{ "mock": true, "cartItemId": "<synthetic ID>", "status": "added" }`.
+   Observe completion over SSE or the tasks endpoint. Authentication expiry
+   produces `AUTH_CONTEXT_EXPIRED` and requires authentication again.
+
+Use `"decision": "reject"` with its own idempotency key to decline an approval;
+rejection does not authorize or resume cart execution. Changes to material
+arguments require a replacement approval under the existing runtime checks.
+
+Confirmation and cancellation remain provider intent examples with their message
+flows pending. Recorded runtime SSE fixtures are also pending; future fixtures
 must be captured from actual runtime execution, never fabricated.
 Everything described here is fictional demo behavior, with no production
 readiness claim.

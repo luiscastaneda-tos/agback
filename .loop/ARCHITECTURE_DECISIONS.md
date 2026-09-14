@@ -380,6 +380,103 @@ with a deterministic, synthetic `cartItemId`.
   `ToolInvoker -> PolicyEngine -> ApprovalEngine -> ExecutorRegistry -> Executor`.
 - No agent or LLM may invoke the executor or `NoktosClient` directly (D-002).
 
+## D-020 - confirm_booking and cancel_booking specification (V1)
+
+Recorded while resolving the second BE-018 HUMAN_GATE on 2026-09-14.
+Freezes the security, arguments, material hashing, preview and mock contracts for
+the `confirm_booking` and `cancel_booking` tools.
+
+### 1. confirm_booking
+
+#### Arguments schema
+```typescript
+{
+  cartItemId: string;
+  travelerId: string;   // Binding identity
+  travelerName: string; // Human display only, derived from trusted source
+  totalPrice: number;   // > 0
+  currency: string;
+}
+```
+`travelerId` is the binding identity for execution and audit. `travelerName` is display only and must be derived from a trusted source associated with `travelerId`.
+
+#### Material fields for approval hashing
+```json
+[
+  "cartItemId",
+  "travelerId",
+  "totalPrice",
+  "currency"
+]
+```
+`travelerName` does not form part of the hash while it remains display derived. (If it cannot be guaranteed to be derived from a trusted source, it must be included in `materialFields`).
+Any change in `materialFields` produces: pending approval -> `superseded` -> new mandatory approval.
+
+For V1, `cartItemId` must identify an immutable cart item once created. If future design permits materially modifying a cart item under the same ID, do not reuse this approval: introduce `cartItemVersion`, `cartItemSnapshotHash` or equivalent prior to real integration.
+
+#### Human input preview
+Allowlisted projection only:
+- Ítem de carrito (`cartItemId`)
+- Huésped (`travelerName`)
+- Total a pagar + moneda (`totalPrice` + `currency`, with purchase/confirmation visual emphasis)
+
+#### Mock return shape
+`MockNoktosClient.confirmBooking(...)` returns:
+```json
+{
+  "mock": true,
+  "bookingId": "string",
+  "status": "confirmed"
+}
+```
+
+### 2. cancel_booking
+
+#### Arguments schema
+```typescript
+{
+  bookingId: string;
+  travelerId: string;   // Binding identity
+  travelerName: string; // Human display only
+  reason?: string;
+}
+```
+
+#### Material fields for approval hashing
+```json
+[
+  "bookingId",
+  "travelerId",
+  "reason"
+]
+```
+The absent value of `reason` must be deterministically canonicalized for `payloadHash`.
+`reason` is material because it appears in human approval and audit. If changed after requesting approval -> pending approval transitions to `superseded` -> new mandatory approval.
+`travelerName` remains display only.
+
+#### Human input preview
+Allowlisted projection only:
+- ID de reserva (`bookingId`)
+- Huésped (`travelerName`)
+- Motivo de cancelación (`reason` or formatted placeholder)
+
+#### Mock return shape
+`MockNoktosClient.cancelBooking(...)` returns:
+```json
+{
+  "mock": true,
+  "bookingId": "string",
+  "status": "cancelled"
+}
+```
+
+### 3. Policy & Execution chokepoint
+Both actions remain `HUMAN_APPROVAL_REQUIRED` (D-003).
+Execution is exclusively permitted through:
+`Agent -> ToolInvoker -> PolicyEngine -> ApprovalEngine -> ExecutorRegistry -> Executor -> NoktosClient`.
+Never permit `Agent -> Executor` or `Agent -> NoktosClient` directly (D-002).
+`inputPreview` must be an allowlisted projection, never raw argument serialization.
+
 ## OPEN - escalate, never invent
 
 ### Q-001 - Durable persistence and retention

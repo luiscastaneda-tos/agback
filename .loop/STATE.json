@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 19,
+  "iteration": 20,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -23,14 +23,15 @@
     "BE-012-04",
     "BE-013-01",
     "BE-013-02",
-    "BE-016-01"
+    "BE-016-01",
+    "BE-013A-01"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-016-01",
+    "task_id": "BE-013A-01",
     "verdict": "approve",
-    "summary": "The diff meets BE-016-01 acceptance criteria and stays within the two allowed files. It adds typed asynchronous search with deterministic fictional data, fresh result objects, an explicit mock marker, and fixed MOCK-labelled logging. No credentials, network calls, application wiring, or boundary violations are introduced. Harness build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T16:50:59Z",
+    "summary": "The three authorized files meet BE-013A-01 acceptance criteria. The registry starts empty, rejects blank and duplicate keys, returns undefined for unknown keys, and never invokes executors. ExecutionContext matches existing credential types. No execution bypass, credential exposure, or scope violation is introduced. Harness build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T17:00:23Z",
     "provider": "codex"
   },
   "notes": [
@@ -41,7 +42,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 19,
+    "slot": 20,
     "last_provider": "codex",
     "claude_review_every": 0
   }

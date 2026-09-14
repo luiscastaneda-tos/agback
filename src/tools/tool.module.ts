@@ -31,6 +31,6 @@ import { ToolRegistry } from './tool-registry';
       useFactory: createToolInvoker,
     },
   ],
-  exports: [ToolInvoker],
+  exports: [ToolInvoker, ToolRegistry],
 })
 export class ToolModule {}

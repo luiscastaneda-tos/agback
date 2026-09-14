@@ -654,6 +654,58 @@ If the task enters `queued` or `running` due to an approved resumption and the a
   plus only the minimal wiring strictly required by the subtask.
 - `src/tasks/` must NOT be placed in `forbidden_paths` for this packet.
 
+## D-023 - Runtime approval lifecycle event producers
+
+Recorded while resolving the BE-024-08 HUMAN_GATE on 2026-09-14.
+Freezes the emission points, payload shapes, security boundaries, and harness scope
+for real runtime approval lifecycle events over the event bus and SSE stream.
+
+### 1. Mandatory Lifecycle Events & Emission Triggers
+The backend runtime must publish real approval lifecycle events to `EventBusService`;
+recorded fixtures must never rely on manually fabricated events.
+
+- `approval.requested`: Emitted when an action pauses for approval (`ToolInvoker` / `TaskService.pauseForApproval`).
+- `approval.approved`: Emitted when the legitimate conversation owner records an approved decision (`ApprovalDecisionService` / `reconcileApproval`).
+- `approval.rejected`: Emitted when the owner records a rejection.
+- `approval.expired`: Emitted when a pending or unresolved approval expires past its TTL.
+- `approval.superseded`: Emitted when material arguments change, rendering a previous approval obsolete.
+
+### 2. Allowlisted Operational Payload
+Payloads must be minimal, structured, and operational:
+```typescript
+{
+  approvalId: string;
+  status: string;
+  action?: string;
+}
+```
+
+### 3. Security & Redaction Boundaries
+- **Strict Prohibitions**: Never emit raw tool arguments, `accessToken`, `authContextId`, unnecessary traveler PII, model reasoning, chain-of-thought, prompts, or the full unredacted tool payload.
+- **Enforcement**: All approval events must pass through `EventBusService.publish(...)` and be subject to existing payload redaction rules (`redactEventPayload`).
+
+### 4. Idempotency & Deduplication
+- A state transition (e.g. `pending -> approved`) must produce at most one `approval.approved` event.
+- Repeated calls to `POST /approvals/:id/decision` with identical decision or idempotency keys must not emit duplicate events.
+- Replays from the SSE buffer retransmit existing frames using monotonic sequence numbers, but must never cause new event emissions in the domain.
+
+### 5. Correlation Preservation
+Every event must preserve existing correlation metadata:
+- `conversationId`
+- `taskId`
+- `approvalId` (within the allowlisted payload)
+- `correlationId`
+without introducing sensitive data or tokens into the envelope.
+
+### 6. Harness Scope & Prerequisite Task
+- Current task packet `BE-024-08` is restricted to fixtures and documentation and must NOT be broadened.
+- The Architect is authorized to emit a dedicated prerequisite subtask (e.g. `BE-024-07B`) with `allowed_paths`:
+  - `src/approvals/`
+  - `src/tools/`
+  - `src/events/`
+  plus any strictly necessary minimal wiring.
+- Once runtime producers are active and committed, `BE-024-08` will capture genuine runtime-provenance fixtures.
+
 ## OPEN - escalate, never invent
 
 ### Q-001 - Durable persistence and retention

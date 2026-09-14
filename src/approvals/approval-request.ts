@@ -42,3 +42,12 @@ export interface CreateApprovalRequestInput {
   inputPreview: readonly ApprovalPreviewField[];
   payloadHash: string;
 }
+
+/** Internal storage input; HTTP idempotency is handled outside this store. */
+export interface RecordApprovalDecisionInput {
+  approvalId: string;
+  decision: 'approve' | 'reject';
+  /** Authenticated deciding user, authorized by the caller as conversation owner. */
+  userId: string;
+  reason?: string;
+}

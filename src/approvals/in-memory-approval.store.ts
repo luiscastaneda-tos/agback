@@ -1,9 +1,13 @@
 import { randomUUID } from 'node:crypto';
 
 import type { RuntimeConfig } from '../config/runtime-config';
-import type { ApprovalRequest, CreateApprovalRequestInput } from './approval-request';
+import type {
+  ApprovalRequest,
+  CreateApprovalRequestInput,
+  RecordApprovalDecisionInput,
+} from './approval-request';
 
-/** Process-local creation and reads only; this store grants no execution authority. */
+/** Process-local approval storage; this store grants no execution authority. */
 export class InMemoryApprovalStore {
   private readonly requests = new Map<string, ApprovalRequest>();
   private readonly approvalTtlMs: number;
@@ -63,10 +67,35 @@ export class InMemoryApprovalStore {
       .map((request) => this.read(request));
   }
 
-  private read(request: ApprovalRequest): ApprovalRequest {
-    if (request.status === 'pending' && Date.parse(request.expiresAt) <= Date.now()) {
-      request.status = 'expired';
+  /**
+   * Internal storage operation requiring prior conversation-owner authorization
+   * by the caller. Recording a decision does not authorize execution.
+   */
+  recordDecision(input: RecordApprovalDecisionInput): ApprovalRequest | undefined {
+    const request = this.requests.get(input.approvalId);
+    if (request === undefined) return undefined;
+
+    const now = Date.now();
+    this.expirePending(request, now);
+    if (request.status === 'pending') {
+      request.status = input.decision === 'approve' ? 'approved' : 'rejected';
+      request.resolvedAt = new Date(now).toISOString();
+      request.resolvedBy = input.userId;
+      if (input.decision === 'reject' && input.reason !== undefined) {
+        request.rejectionReason = input.reason;
+      }
     }
     return structuredClone(request);
+  }
+
+  private read(request: ApprovalRequest): ApprovalRequest {
+    this.expirePending(request, Date.now());
+    return structuredClone(request);
+  }
+
+  private expirePending(request: ApprovalRequest, now: number): void {
+    if (request.status === 'pending' && Date.parse(request.expiresAt) <= now) {
+      request.status = 'expired';
+    }
   }
 }

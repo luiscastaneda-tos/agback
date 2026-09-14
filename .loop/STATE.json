@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 42,
+  "iteration": 43,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -46,14 +46,15 @@
     "BE-021-03",
     "BE-021-04",
     "BE-013-05",
-    "BE-014-02"
+    "BE-014-02",
+    "BE-022-03"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-014-02",
+    "task_id": "BE-022-03",
     "verdict": "approve",
-    "summary": "The change meets BE-014-02: ToolInvoker is wired as a singleton using shared exported services, ExecutorRegistry construction remains inside the execution boundary, and invocation behavior is unchanged. Initialization introduces no business side effects. Only allowed files changed. Harness build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T19:11:37Z",
+    "summary": "The complete diff meets BE-022-03 requirements and stays within the two allowed files. The global filter preserves existing envelopes and statuses, safely normalizes fallback errors, and avoids JSON writes after headers are sent. No architecture or security violations found. Harness build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T19:13:56Z",
     "provider": "codex"
   },
   "notes": [
@@ -64,7 +65,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 42,
+    "slot": 43,
     "last_provider": "codex",
     "claude_review_every": 0
   }

@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 38,
+  "iteration": 39,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -42,14 +42,15 @@
     "BE-018-04",
     "BE-018-05",
     "BE-018-06",
-    "BE-021-02"
+    "BE-021-02",
+    "BE-021-03"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-021-02",
+    "task_id": "BE-021-03",
     "verdict": "approve",
-    "summary": "The diff meets BE-021-02 acceptance criteria and stays within allowed paths. Queue correlation is preserved, delegation returns without waiting for child execution, and failures are sanitized. No architecture or security violations found. Harness build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T18:15:18Z",
+    "summary": "The adapter meets BE-021-03 acceptance criteria and stays within the sole allowed path. It validates task identity and status, builds context exclusively from trusted task fields, maps approval pauses correctly, and sanitizes failures without weakening execution boundaries. Harness build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T19:04:14Z",
     "provider": "codex"
   },
   "notes": [
@@ -60,7 +61,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 38,
+    "slot": 39,
     "last_provider": "codex",
     "claude_review_every": 0
   }

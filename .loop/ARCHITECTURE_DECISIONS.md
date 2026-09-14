@@ -477,6 +477,76 @@ Execution is exclusively permitted through:
 Never permit `Agent -> Executor` or `Agent -> NoktosClient` directly (D-002).
 `inputPreview` must be an allowlisted projection, never raw argument serialization.
 
+## D-021 - Demo scripted LLM provider for V1
+
+Recorded while resolving the BE-024 HUMAN_GATE on 2026-09-14.
+Freezes the LLM provider strategy, behavior, safety boundaries, and transparency
+for V1 demo execution and fixture generation.
+
+### 1. Authorized Configuration & Implementation
+For V1, the system authorizes:
+```text
+LLM_PROVIDER=demo-provider
+LLM_MODEL=fictional-demo-model
+```
+Implemented via:
+```typescript
+DemoScriptedLlmProvider implements LlmProvider
+```
+Registered behind the existing `LlmProvider` interface and managed through `LlmProviderRegistry`.
+
+### 2. Scope & Purpose
+This provider exists exclusively for:
+- Local demonstration and runnable end-to-end multi-agent flow.
+- Deterministic, hermetic, and reproducible generation of real SSE event fixtures.
+- Known, fictional multi-agent scenarios without incurring token costs or relying on external network dependencies.
+- It does NOT represent a real LLM provider and must never be portrayed as OpenAI, Gemini, Claude, or an external generative model.
+
+### 3. Behavioral Rules & Intent Handling
+`DemoScriptedLlmProvider` must respond deterministically to an explicit set of demo scenarios:
+- **Greeting / General Clarification**: Direct textual response from `SupervisorAgent`.
+- **Hotel Search Request**: `SupervisorAgent` returns delegation intent (`delegate_to_hotel_search`) to `HotelSearchAgent`.
+- **Hotel Search Goal Execution**: `HotelSearchAgent` calls `search_hotels` via the standard tool protocol.
+- **Cart & Reservation Intents**:
+  - `add_reservation_to_cart`: triggers `HUMAN_APPROVAL_REQUIRED` policy.
+  - `confirm_booking`: triggers `HUMAN_APPROVAL_REQUIRED` policy.
+  - `cancel_booking`: triggers `HUMAN_APPROVAL_REQUIRED` policy.
+
+### 4. Technical Chokepoints (Strict Invariant)
+The scripted provider decides only what intent or tool call to request. It has zero execution capability.
+It must NEVER bypass:
+- `TaskQueue`
+- `ToolInvoker`
+- `PolicyEngine`
+- `ApprovalEngine`
+- `ExecutorRegistry`
+
+All execution rules and invariants from D-001, D-002, and D-003 apply strictly.
+
+### 5. Security & Transparency
+- **No Leaks**: Never emit, synthesize, or leak `chain-of-thought`, internal reasoning, scratchpads, tokens, `authContextId`, or raw sensitive arguments.
+- **Envelope Compatibility**: Output conforms strictly to `LlmAssistantOutput` (`{ text: string, toolCalls: LlmToolCall[] }`).
+- **Transparency**: The implementation and documentation must clearly label this mode as `DEMO / FICTIONAL / SCRIPTED`.
+- **Forbidden Claims**: Do not claim `production ready`, `real LLM`, or `autonomous reasoning` while `demo-provider` is active.
+
+### 6. Clean Dependency Inversion & Future Architecture
+`DemoScriptedLlmProvider` must not pollute agents, task processors, or domain services with provider-specific conditionals or branching.
+The dependency graph remains strictly:
+```text
+SupervisorAgent / HotelSearchAgent
+              ↓
+         LlmProvider
+              ↓
+     LlmProviderRegistry
+              ↓
+DemoScriptedLlmProvider (V1) / RealLlmProvider (Future)
+```
+Swapping to a production LLM provider in a future release requires solely adding another `LlmProvider` implementation in `src/llm/`, without any changes to agents, task queues, tool invokers, or approval engines.
+
+### 7. Recorded Fixtures in BE-024
+The recorded event fixtures generated for `BE-024` must be captured directly from real runtime executions of the V1 pipeline running with `DemoScriptedLlmProvider`. Event streams must never be manually fabricated or edited outside actual runtime execution.
+No external OpenAI, Gemini, or third-party generative SDKs or secrets are permitted in this closure.
+
 ## OPEN - escalate, never invent
 
 ### Q-001 - Durable persistence and retention

@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 22,
+  "iteration": 23,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -26,14 +26,15 @@
     "BE-016-01",
     "BE-013A-01",
     "BE-013-03",
-    "BE-013-04"
+    "BE-013-04",
+    "BE-014-01"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-013-04",
+    "task_id": "BE-014-01",
     "verdict": "approve",
-    "summary": "BE-013-04 meets acceptance criteria and architecture requirements. Reconciliation checks current expiry after authorization for new decisions and cached replays, fails only matching waiting tasks, and preserves rejection and supersession behavior. Only the allowed file changed. Harness build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T17:04:49Z",
+    "summary": "BE-014-01 meets the task requirements and architecture constraints. Changes are limited to the two allowed files. Approval-required execution enforces ownership, binding, expiry and single-use consumption before resolving executors or credentials. Failures are sanitized. Harness verification confirms the build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T17:07:54Z",
     "provider": "codex"
   },
   "notes": [
@@ -44,7 +45,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 22,
+    "slot": 23,
     "last_provider": "codex",
     "claude_review_every": 0
   }

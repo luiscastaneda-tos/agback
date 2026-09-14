@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 7,
+  "iteration": 8,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -11,14 +11,15 @@
     "BE-003-01",
     "BE-004-01",
     "BE-006-01",
-    "BE-007-01"
+    "BE-007-01",
+    "BE-005-01"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-007-01",
+    "task_id": "BE-005-01",
     "verdict": "approve",
-    "summary": "The complete diff meets BE-007-01 acceptance criteria and stays within allowed paths. Remote verification gates context creation; credentials remain private in memory with expiry checks and eviction; HTTP failures use the frozen safe envelope. No execution-boundary or architecture violations found. Harness build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T15:56:18Z",
+    "summary": "The complete diff meets BE-005-01 requirements: authentication and ownership checks precede event access, SSE replay and live delivery preserve sequence numbers, cursors are validated, and disconnect/error handling releases subscriptions. Changes stay within authorized paths and preserve security boundaries. Harness build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T16:00:46Z",
     "provider": "codex"
   },
   "notes": [
@@ -29,7 +30,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 7,
+    "slot": 8,
     "last_provider": "codex",
     "claude_review_every": 0
   }

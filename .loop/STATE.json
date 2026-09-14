@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 28,
+  "iteration": 29,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -32,14 +32,15 @@
     "BE-015-01",
     "BE-019-01",
     "BE-020-01",
-    "BE-021-01"
+    "BE-021-01",
+    "BE-022-01"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-021-01",
+    "task_id": "BE-022-01",
     "verdict": "approve",
-    "summary": "The change meets BE-021-01 acceptance criteria within the two allowed files. Delegation validates the stored parent, inherits its bindings, queues the child without awaiting execution, and publishes only operational identifiers. No architecture or security violations found. Harness build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T17:23:09Z",
+    "summary": "BE-022-01 meets acceptance criteria. The controller creates owner-bound conversations using guard-established identity, returns HTTP 201 with an explicit contract-compatible projection, and uses safe error envelopes. Changes are confined to allowed paths and preserve architecture boundaries. Harness build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T17:25:11Z",
     "provider": "codex"
   },
   "notes": [
@@ -50,7 +51,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 28,
+    "slot": 29,
     "last_provider": "codex",
     "claude_review_every": 0
   }

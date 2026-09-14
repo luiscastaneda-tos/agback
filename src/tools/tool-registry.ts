@@ -1,5 +1,6 @@
 import { toJSONSchema } from 'zod';
 
+import { addReservationToCartDefinition } from './definitions/add-reservation-to-cart';
 import { searchHotelsDefinition } from './definitions/search-hotels';
 import type { ToolDefinition } from './definitions/tool-definition';
 import type { ToolHandle } from './tool-handle';
@@ -12,6 +13,7 @@ export class ToolRegistry {
 
   constructor() {
     this.register(searchHotelsDefinition);
+    this.register(addReservationToCartDefinition);
   }
 
   register(definition: ToolDefinition): void {

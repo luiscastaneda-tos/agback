@@ -7,12 +7,13 @@ import { ConversationModule } from '../conversations/conversation.module';
 import { EventModule } from '../events/event.module';
 import { AgentsController } from './agents.controller';
 import { ApprovalDecisionsController } from './approval-decisions.controller';
+import { ConversationApprovalsController } from './conversation-approvals.controller';
 import { ConversationEventsController } from './conversation-events.controller';
 import { ConversationMessagesController } from './conversation-messages.controller';
 import { ConversationsController } from './conversations.controller';
 
 @Module({
   imports: [AuthModule, ConversationModule, EventModule, AgentRegistryModule, ApprovalModule],
-  controllers: [ConversationEventsController, AgentsController, ApprovalDecisionsController, ConversationsController, ConversationMessagesController],
+  controllers: [ConversationEventsController, AgentsController, ApprovalDecisionsController, ConversationsController, ConversationMessagesController, ConversationApprovalsController],
 })
 export class HttpModule {}

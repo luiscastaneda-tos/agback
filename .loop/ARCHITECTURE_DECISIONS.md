@@ -312,6 +312,74 @@ No agent and no LLM ever receives the access token.
 an explicitly approved technical need arises; use task and conversation ids for
 public correlation.
 
+## D-019 - add_reservation_to_cart specification (V1)
+
+Recorded while resolving the BE-018 HUMAN_GATE on 2026-09-14.
+Freezes the security, argument, material hashing, preview and mock contracts for
+the `add_reservation_to_cart` tool.
+
+### Arguments schema
+```typescript
+{
+  hotelId: string;
+  hotelName: string;
+  checkIn: string;      // YYYY-MM-DD
+  checkOut: string;     // YYYY-MM-DD
+  travelerId: string;   // Binding identity for authorization and execution
+  travelerName: string; // Human display only, not a substitute for identity
+  rooms: number;        // integer > 0, default 1
+  totalPrice: number;   // > 0
+  currency: string;
+}
+```
+
+- `travelerId` is the binding identity for execution and audit.
+- `travelerName` is human-readable display information for the approval preview; it must never be used as a substitute for identity or authorization.
+
+### Material fields for approval hashing
+```json
+[
+  "hotelId",
+  "hotelName",
+  "checkIn",
+  "checkOut",
+  "travelerId",
+  "travelerName",
+  "rooms",
+  "totalPrice",
+  "currency"
+]
+```
+Any modification to these fields during an ongoing conversation causes any prior approval to transition to `superseded` (D-007), requiring a new human approval.
+
+### Human input preview
+The human approval card displays exclusively an allowlisted projection:
+- Hotel (`hotelName`)
+- Check-in (`checkIn`)
+- Check-out (`checkOut`)
+- Huésped (`travelerName`)
+- Habitaciones (`rooms`)
+- Precio total (`totalPrice` + `currency`)
+
+Raw argument JSON must never be serialized or rendered directly.
+
+### Mock return shape
+`MockNoktosClient.addReservationToCart(...)` returns:
+```json
+{
+  "mock": true,
+  "cartItemId": "string",
+  "status": "added"
+}
+```
+with a deterministic, synthetic `cartItemId`.
+
+### Policy & Execution chokepoint
+- `add_reservation_to_cart` is classified as `HUMAN_APPROVAL_REQUIRED` (D-003).
+- It can only reach the executor through the strict pipeline:
+  `ToolInvoker -> PolicyEngine -> ApprovalEngine -> ExecutorRegistry -> Executor`.
+- No agent or LLM may invoke the executor or `NoktosClient` directly (D-002).
+
 ## OPEN - escalate, never invent
 
 ### Q-001 - Durable persistence and retention

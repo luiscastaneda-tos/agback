@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 43,
+  "iteration": 44,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -47,14 +47,15 @@
     "BE-021-04",
     "BE-013-05",
     "BE-014-02",
-    "BE-022-03"
+    "BE-022-03",
+    "BE-024-01"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-022-03",
+    "task_id": "BE-024-01",
     "verdict": "approve",
-    "summary": "The complete diff meets BE-022-03 requirements and stays within the two allowed files. The global filter preserves existing envelopes and statuses, safely normalizes fallback errors, and avoids JSON writes after headers are sent. No architecture or security violations found. Harness build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T19:13:56Z",
+    "summary": "The complete diff meets BE-024-01 requirements and stays within the three allowed files. Scripted calls are deterministic, fictional, schema-compatible, and limited to offered tools. Execution and approval boundaries remain unchanged. Harness build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T19:32:07Z",
     "provider": "codex"
   },
   "notes": [
@@ -65,7 +66,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 43,
+    "slot": 44,
     "last_provider": "codex",
     "claude_review_every": 0
   }

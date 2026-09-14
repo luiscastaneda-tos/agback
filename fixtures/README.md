@@ -1,7 +1,8 @@
 # Runtime SSE captures
 
-No recorded runtime fixture is included yet. `capture-hotel-search.mjs` prepares
-capture tooling; adding it is not evidence of a runtime execution.
+No recorded runtime fixture is included yet. `capture-hotel-search.mjs` and
+`capture-cart-approval.mjs` prepare capture tooling; adding them is not evidence
+of a runtime execution. Actual authenticated cart capture remains pending.
 
 This is DEMO / FICTIONAL / SCRIPTED behavior. The provider is deterministic,
 hotel results come from the labelled Noktos mock, and no real traveler PII is
@@ -53,3 +54,33 @@ after successful capture, with owner-only permissions; existing files are never
 overwritten. No headers, credentials, or internal auth handles are serialized.
 A filesystem write failure may leave an incomplete output file: do not treat it
 as a successful fixture, and select an unused path for the next attempt.
+
+For the cart approval flow, use the same prerequisites and hidden token input:
+
+```sh
+node fixtures/capture-cart-approval.mjs --base-url http://localhost:3000 --output /tmp/cart-approval.sse
+```
+
+This utility creates an authenticated conversation, subscribes to SSE, and then
+submits `demo:add-reservation-to-cart`. On `approval.requested` for the accepted
+task, it fetches the conversation approvals and displays only the matching
+pending approval's allowlisted `inputPreview`: hotel, dates, fictional traveler,
+rooms, and total price. It requires you to type the exact word `APPROVE` and press
+Enter at a separate hidden interactive prompt before sending an authenticated
+approve decision with a fresh idempotency UUID. Any other answer, empty input,
+Ctrl-C, or Ctrl-D cancels without sending a decision. Declining does not submit
+a rejection; the pending request remains in the in-memory backend until expiry.
+
+Success requires `approval.requested`, then `approval.approved` for that same
+approval and task, then the accepted task's `task.completed`, with contiguous
+conversation SSE sequence numbers. Rejection, expiry, supersession, task failure,
+cancellation, malformed events, and interrupted streams fail the capture.
+The two-minute deadline includes preview review and confirmation; the 8 MiB
+limit, redirect refusal, sanitized errors, and exclusive owner-only output
+creation also apply. There are no retries. Cancellation after sending approval
+cannot undo backend execution, and backend work may continue after capture fails.
+
+Only unchanged runtime SSE frame bytes through the matching completion are
+written, after successful capture. Approval HTTP responses, headers, credentials,
+auth handles, and task snapshots are never saved. This remains DEMO / FICTIONAL /
+SCRIPTED tooling, not a recorded fixture or evidence that a capture succeeded.

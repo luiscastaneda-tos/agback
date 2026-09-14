@@ -1,11 +1,16 @@
 import type { Executor } from './executor';
+import { SearchHotelsExecutor } from './executors/search-hotels.executor';
 
 /**
- * Internal resolution seam for the future ToolInvoker only.
- * Future concrete executor imports belong here; registration never executes them.
+ * Internal resolution seam for ToolInvoker only.
+ * Concrete executor imports belong here; registration never executes them.
  */
 export class ExecutorRegistry {
   private readonly entries = new Map<string, Executor<unknown>>();
+
+  constructor() {
+    this.register('search_hotels', new SearchHotelsExecutor());
+  }
 
   register<TArgs>(executorKey: string, executor: Executor<TArgs>): void {
     this.requireKey(executorKey);

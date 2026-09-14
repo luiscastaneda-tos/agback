@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 23,
+  "iteration": 24,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -27,14 +27,15 @@
     "BE-013A-01",
     "BE-013-03",
     "BE-013-04",
-    "BE-014-01"
+    "BE-014-01",
+    "BE-017-01"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-014-01",
+    "task_id": "BE-017-01",
     "verdict": "approve",
-    "summary": "BE-014-01 meets the task requirements and architecture constraints. Changes are limited to the two allowed files. Approval-required execution enforces ownership, binding, expiry and single-use consumption before resolving executors or credentials. Failures are sanitized. Harness verification confirms the build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T17:07:54Z",
+    "summary": "The diff meets BE-017-01 requirements and stays within allowed paths. Hotel search uses strict destination validation, inert metadata, registry-based execution, and the labelled mock without forwarding credentials. Existing duplicate rejection and defensive handle copies remain intact. Harness build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T17:10:02Z",
     "provider": "codex"
   },
   "notes": [
@@ -45,7 +46,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 23,
+    "slot": 24,
     "last_provider": "codex",
     "claude_review_every": 0
   }

@@ -1,5 +1,6 @@
 import { toJSONSchema } from 'zod';
 
+import { searchHotelsDefinition } from './definitions/search-hotels';
 import type { ToolDefinition } from './definitions/tool-definition';
 import type { ToolHandle } from './tool-handle';
 
@@ -8,6 +9,10 @@ export class ToolRegistry {
     definition: ToolDefinition;
     handle: ToolHandle;
   }>();
+
+  constructor() {
+    this.register(searchHotelsDefinition);
+  }
 
   register(definition: ToolDefinition): void {
     if (this.entries.has(definition.name)) {

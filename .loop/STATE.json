@@ -2,7 +2,7 @@
   "project": "noktos-agent-backend",
   "version": 1,
   "status": "RUNNING",
-  "iteration": 11,
+  "iteration": 12,
   "current_task": null,
   "completed_tasks": [
     "BE-000-01",
@@ -15,14 +15,15 @@
     "BE-005-01",
     "BE-008-01",
     "BE-009-01",
-    "BE-010-01"
+    "BE-010-01",
+    "BE-011-01"
   ],
   "blocked_tasks": [],
   "last_review": {
-    "task_id": "BE-010-01",
+    "task_id": "BE-011-01",
     "verdict": "approve",
-    "summary": "The diff meets BE-010-01 acceptance criteria: exactly four immutable policy mappings, own-key-safe default denial, ignored arguments, and no side effects or out-of-scope changes. Harness build and full-tree layering checks passed.",
-    "reviewed_at": "2026-09-14T16:29:36Z",
+    "summary": "The complete diff meets BE-011-01 acceptance criteria and architecture rules. Only the two allowed utilities are added; canonical serialization and material selection preserve the required approval binding and reject unsupported data with generic errors. Harness build and full-tree layering checks passed.",
+    "reviewed_at": "2026-09-14T16:31:55Z",
     "provider": "codex"
   },
   "notes": [
@@ -33,7 +34,7 @@
     "contracts/ is frozen at 1.0.0 and is a protected path; changing it is a human operation."
   ],
   "reviewer_rotation": {
-    "slot": 11,
+    "slot": 12,
     "last_provider": "codex",
     "claude_review_every": 0
   }

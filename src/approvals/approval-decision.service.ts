@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import type { AuthContextService } from '../auth/auth-context.service';
 import type { InMemoryConversationStore } from '../conversations/in-memory-conversation.store';
+import type { EventBusService } from '../events/event-bus.service';
 import type { TaskQueueService } from '../tasks/task-queue.service';
 import type { TaskService } from '../tasks/task.service';
 import type { ApprovalRequest } from './approval-request';
@@ -41,6 +42,7 @@ export class ApprovalDecisionService {
     private readonly authContexts: AuthContextService,
     private readonly tasks: TaskService,
     private readonly queue: TaskQueueService,
+    private readonly eventBus: EventBusService,
   ) {}
 
   recordDecision(
@@ -64,9 +66,10 @@ export class ApprovalDecisionService {
 
     // Tuple encoding avoids collisions; every replay rechecks active ownership.
     const key = JSON.stringify([userId, approvalId, parsed.data.idempotencyKey]);
+    const correlationId = randomUUID();
     const cached = this.results.get(key);
     if (cached !== undefined) {
-      this.reconcileApproval(approvalId, userId);
+      this.reconcileApproval(approvalId, userId, correlationId);
       return structuredClone(cached);
     }
 
@@ -83,11 +86,33 @@ export class ApprovalDecisionService {
     }
 
     this.results.set(key, structuredClone(result));
-    this.reconcileApproval(approvalId, userId);
+    // Detached pre-decision snapshot plus synchronous mutation identifies the
+    // single transition; cached and already-resolved submissions never publish.
+    if (
+      approval?.status === 'pending' &&
+      (result.status === 'approved' || result.status === 'rejected')
+    ) {
+      this.eventBus.publish({
+        type: result.status === 'approved' ? 'approval.approved' : 'approval.rejected',
+        conversationId: result.conversationId,
+        taskId: result.taskId,
+        correlationId,
+        payload: {
+          approvalId: result.id,
+          status: result.status,
+          action: result.action,
+        },
+      });
+    }
+    this.reconcileApproval(approvalId, userId, correlationId);
     return structuredClone(result);
   }
 
-  private reconcileApproval(approvalId: string, userId: string): void {
+  private reconcileApproval(
+    approvalId: string,
+    userId: string,
+    correlationId: string,
+  ): void {
     // Reconcile current storage state, never the cached decision snapshot.
     const approval = this.approvals.findById(approvalId);
     if (approval === undefined) return;
@@ -116,7 +141,6 @@ export class ApprovalDecisionService {
       ) return;
 
       // Synchronous transition is the single-winner gate, including replays.
-      const correlationId = randomUUID();
       this.tasks.requeue(task.id, correlationId);
       this.queue.enqueue(task.id, correlationId);
       return;
@@ -128,7 +152,7 @@ export class ApprovalDecisionService {
       expired
         ? { code: 'APPROVAL_EXPIRED', message: 'Approval has expired.' }
         : { code: 'APPROVAL_REJECTED', message: 'Approval was rejected.' },
-      randomUUID(),
+      correlationId,
     );
   }
 }

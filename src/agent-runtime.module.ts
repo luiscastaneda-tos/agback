@@ -67,7 +67,7 @@ export class AgentRuntimeModule implements OnModuleInit {
     this.agents.register(hotelSearch.descriptor);
     this.processors.register(
       supervisor.descriptor.name,
-      new SupervisorTaskProcessor(supervisor, this.delegation),
+      new SupervisorTaskProcessor(supervisor, this.delegation, this.eventBus),
     );
     this.processors.register(
       hotelSearch.descriptor.name,

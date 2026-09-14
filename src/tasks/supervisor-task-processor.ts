@@ -1,4 +1,5 @@
-import type { SupervisorAgent } from '../agents/supervisor/supervisor.agent';
+import type { SupervisorAgent, SupervisorAgentOutcome } from '../agents/supervisor/supervisor.agent';
+import type { EventBusService } from '../events/event-bus.service';
 import type { ToolContext } from '../tools/agent-runtime';
 import type { AgentTask } from './agent-task';
 import type { TaskDelegationService } from './task-delegation.service';
@@ -12,6 +13,7 @@ export class SupervisorTaskProcessor implements TaskProcessor {
   constructor(
     private readonly supervisor: SupervisorAgent,
     private readonly delegation: TaskDelegationService,
+    private readonly eventBus: EventBusService,
   ) {}
 
   async process(
@@ -37,9 +39,24 @@ export class SupervisorTaskProcessor implements TaskProcessor {
           ? {}
           : { approvalId: task.activeApprovalId }),
       };
-      const outcome = await this.supervisor.run(task.goal, toolContext);
+      const lifecycle = {
+        conversationId: task.conversationId,
+        taskId: task.id,
+        agentName: 'SupervisorAgent',
+        correlationId: context.correlationId,
+        payload: {},
+      };
+      let outcome: SupervisorAgentOutcome;
+      this.eventBus.publish({ ...lifecycle, type: 'agent.started' });
+      try {
+        outcome = await this.supervisor.run(task.goal, toolContext);
+      } catch {
+        this.eventBus.publish({ ...lifecycle, type: 'agent.failed' });
+        return this.failure();
+      }
       switch (outcome.kind) {
         case 'completed':
+          this.eventBus.publish({ ...lifecycle, type: 'agent.completed' });
           return {
             kind: 'completed',
             result: {
@@ -49,6 +66,7 @@ export class SupervisorTaskProcessor implements TaskProcessor {
             },
           };
         case 'cart_completed':
+          this.eventBus.publish({ ...lifecycle, type: 'agent.completed' });
           return {
             kind: 'completed',
             result: {
@@ -62,6 +80,7 @@ export class SupervisorTaskProcessor implements TaskProcessor {
             },
           };
         case 'confirmation_completed':
+          this.eventBus.publish({ ...lifecycle, type: 'agent.completed' });
           return {
             kind: 'completed',
             result: {
@@ -75,6 +94,7 @@ export class SupervisorTaskProcessor implements TaskProcessor {
             },
           };
         case 'cancellation_completed':
+          this.eventBus.publish({ ...lifecycle, type: 'agent.completed' });
           return {
             kind: 'completed',
             result: {
@@ -106,11 +126,18 @@ export class SupervisorTaskProcessor implements TaskProcessor {
               return this.failure();
           }
         case 'delegated': {
-          const childTaskId = this.delegation.delegateHotelSearch(
-            task.id,
-            outcome.goal,
-            context.correlationId,
-          );
+          let childTaskId: string;
+          try {
+            childTaskId = this.delegation.delegateHotelSearch(
+              task.id,
+              outcome.goal,
+              context.correlationId,
+            );
+          } catch {
+            this.eventBus.publish({ ...lifecycle, type: 'agent.failed' });
+            return this.failure();
+          }
+          this.eventBus.publish({ ...lifecycle, type: 'agent.completed' });
           return {
             kind: 'completed',
             result: {
@@ -121,6 +148,7 @@ export class SupervisorTaskProcessor implements TaskProcessor {
           };
         }
         case 'failed':
+          this.eventBus.publish({ ...lifecycle, type: 'agent.failed' });
           if (outcome.code === 'AUTH_CONTEXT_EXPIRED') {
             return { kind: 'failed', failure: {
               code: 'AUTH_CONTEXT_EXPIRED',

@@ -12,14 +12,15 @@ export class HotelSearchTaskProcessor implements TaskProcessor {
 
   async process(
     task: AgentTask,
-    _context: TaskProcessorContext,
+    context: TaskProcessorContext,
   ): Promise<TaskProcessorOutcome> {
     try {
       if (
         task.agentName !== 'HotelSearchAgent' ||
         task.status !== 'running' ||
         typeof task.id !== 'string' || !task.id.trim() ||
-        typeof task.conversationId !== 'string' || !task.conversationId.trim()
+        typeof task.conversationId !== 'string' || !task.conversationId.trim() ||
+        typeof context.correlationId !== 'string' || !context.correlationId.trim()
       ) {
         return this.failure();
       }
@@ -27,6 +28,7 @@ export class HotelSearchTaskProcessor implements TaskProcessor {
       const toolContext: ToolContext = {
         taskId: task.id,
         conversationId: task.conversationId,
+        correlationId: context.correlationId,
         ...(task.activeApprovalId === undefined
           ? {}
           : { approvalId: task.activeApprovalId }),

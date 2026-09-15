@@ -1,0 +1,39 @@
+id: 1
+data: {"id":"9e8c287b-d38d-4cd2-b102-b1e0038d8f64","seq":1,"type":"task.created","conversationId":"22899a8e-68cd-48f3-b0c9-58de55a59bb9","taskId":"2c9bdded-a61c-418e-8588-537a571bb2aa","agentName":"SupervisorAgent","correlationId":"053ea5dd-c02f-471a-8126-eb778a835cef","occurredAt":"2026-09-15T17:33:05.672Z","payload":{"status":"queued"}}
+
+id: 2
+data: {"id":"ec6b6ea4-3662-4633-bd2a-e14fa0d75c4a","seq":2,"type":"task.queued","conversationId":"22899a8e-68cd-48f3-b0c9-58de55a59bb9","taskId":"2c9bdded-a61c-418e-8588-537a571bb2aa","agentName":"SupervisorAgent","correlationId":"053ea5dd-c02f-471a-8126-eb778a835cef","occurredAt":"2026-09-15T17:33:05.673Z","payload":{"status":"queued"}}
+
+id: 3
+data: {"id":"d0150f58-0dc8-4e2c-88d5-b0d0be34cd3d","seq":3,"type":"task.started","conversationId":"22899a8e-68cd-48f3-b0c9-58de55a59bb9","taskId":"2c9bdded-a61c-418e-8588-537a571bb2aa","agentName":"SupervisorAgent","correlationId":"053ea5dd-c02f-471a-8126-eb778a835cef","occurredAt":"2026-09-15T17:33:05.673Z","payload":{"status":"running"}}
+
+id: 4
+data: {"id":"5fec522f-38fe-4109-93ff-f4faf80aceb6","seq":4,"type":"agent.started","conversationId":"22899a8e-68cd-48f3-b0c9-58de55a59bb9","taskId":"2c9bdded-a61c-418e-8588-537a571bb2aa","agentName":"SupervisorAgent","correlationId":"053ea5dd-c02f-471a-8126-eb778a835cef","occurredAt":"2026-09-15T17:33:05.673Z","payload":{}}
+
+id: 5
+data: {"id":"62d42e81-66fa-4d7e-86cd-9413a4b60727","seq":5,"type":"approval.requested","conversationId":"22899a8e-68cd-48f3-b0c9-58de55a59bb9","taskId":"2c9bdded-a61c-418e-8588-537a571bb2aa","agentName":"SupervisorAgent","correlationId":"053ea5dd-c02f-471a-8126-eb778a835cef","occurredAt":"2026-09-15T17:33:05.677Z","payload":{"approvalId":"4e7f1497-aa28-4dfd-a3d9-71a501ece8c5","status":"pending"}}
+
+id: 6
+data: {"id":"60523894-9a87-4804-b1b1-7f6f06169d15","seq":6,"type":"approval.approved","conversationId":"22899a8e-68cd-48f3-b0c9-58de55a59bb9","taskId":"2c9bdded-a61c-418e-8588-537a571bb2aa","correlationId":"875e1f82-86eb-4460-803a-4d10c9287658","occurredAt":"2026-09-15T17:33:26.632Z","payload":{"approvalId":"4e7f1497-aa28-4dfd-a3d9-71a501ece8c5","status":"approved","action":"add_reservation_to_cart"}}
+
+id: 7
+data: {"id":"c43a0647-74b6-4858-a7e2-f8c05cff9b86","seq":7,"type":"task.queued","conversationId":"22899a8e-68cd-48f3-b0c9-58de55a59bb9","taskId":"2c9bdded-a61c-418e-8588-537a571bb2aa","agentName":"SupervisorAgent","correlationId":"875e1f82-86eb-4460-803a-4d10c9287658","occurredAt":"2026-09-15T17:33:26.632Z","payload":{"status":"queued"}}
+
+id: 8
+data: {"id":"7e433c92-8842-4769-8dcf-1eac2dc45300","seq":8,"type":"task.started","conversationId":"22899a8e-68cd-48f3-b0c9-58de55a59bb9","taskId":"2c9bdded-a61c-418e-8588-537a571bb2aa","agentName":"SupervisorAgent","correlationId":"875e1f82-86eb-4460-803a-4d10c9287658","occurredAt":"2026-09-15T17:33:26.633Z","payload":{"status":"running"}}
+
+id: 9
+data: {"id":"8cc13aed-6c08-4ee6-919e-e4a81729a552","seq":9,"type":"agent.started","conversationId":"22899a8e-68cd-48f3-b0c9-58de55a59bb9","taskId":"2c9bdded-a61c-418e-8588-537a571bb2aa","agentName":"SupervisorAgent","correlationId":"875e1f82-86eb-4460-803a-4d10c9287658","occurredAt":"2026-09-15T17:33:26.633Z","payload":{}}
+
+id: 10
+data: {"id":"41a46f8d-964d-4592-8971-52b8fa380281","seq":10,"type":"tool.called","conversationId":"22899a8e-68cd-48f3-b0c9-58de55a59bb9","taskId":"2c9bdded-a61c-418e-8588-537a571bb2aa","agentName":"SupervisorAgent","correlationId":"875e1f82-86eb-4460-803a-4d10c9287658","occurredAt":"2026-09-15T17:33:26.634Z","payload":{"action":"add_reservation_to_cart","argsPreview":[{"label":"Hotel","value":"Fictional Demo Hotel"},{"label":"Check-in","value":"2030-01-10"},{"label":"Check-out","value":"2030-01-12"},{"label":"Huésped","value":"Fictional Demo Traveler"},{"label":"Habitaciones","value":"1"},{"label":"Precio total","value":"200 MXN"}]}}
+
+id: 11
+data: {"id":"c6350251-01d6-44c3-a80f-8a2b33cb07be","seq":11,"type":"tool.completed","conversationId":"22899a8e-68cd-48f3-b0c9-58de55a59bb9","taskId":"2c9bdded-a61c-418e-8588-537a571bb2aa","agentName":"SupervisorAgent","correlationId":"875e1f82-86eb-4460-803a-4d10c9287658","occurredAt":"2026-09-15T17:33:26.634Z","payload":{"action":"add_reservation_to_cart"}}
+
+id: 12
+data: {"id":"e5011d2a-9dd4-4d35-b8a9-255c5643aaec","seq":12,"type":"agent.completed","conversationId":"22899a8e-68cd-48f3-b0c9-58de55a59bb9","taskId":"2c9bdded-a61c-418e-8588-537a571bb2aa","agentName":"SupervisorAgent","correlationId":"875e1f82-86eb-4460-803a-4d10c9287658","occurredAt":"2026-09-15T17:33:26.635Z","payload":{}}
+
+id: 13
+data: {"id":"c08ecd43-2747-4766-ac7c-ae642bfd1fd4","seq":13,"type":"task.completed","conversationId":"22899a8e-68cd-48f3-b0c9-58de55a59bb9","taskId":"2c9bdded-a61c-418e-8588-537a571bb2aa","agentName":"SupervisorAgent","correlationId":"875e1f82-86eb-4460-803a-4d10c9287658","occurredAt":"2026-09-15T17:33:26.635Z","payload":{"status":"completed"}}
+

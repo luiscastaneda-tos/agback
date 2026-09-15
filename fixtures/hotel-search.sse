@@ -1,0 +1,45 @@
+id: 1
+data: {"id":"e09bc339-dfdd-4faa-81c6-2454c28741cd","seq":1,"type":"task.created","conversationId":"62a2544f-ceeb-40e9-9846-0782fafd36d3","taskId":"ef4f5654-2214-47f5-adea-b47a304a9f25","agentName":"SupervisorAgent","correlationId":"7f878614-a2ba-4eac-a63a-70e717098c8b","occurredAt":"2026-09-15T17:32:03.474Z","payload":{"status":"queued"}}
+
+id: 2
+data: {"id":"a6e538d4-8d21-4926-a2f9-aaca87ed575f","seq":2,"type":"task.queued","conversationId":"62a2544f-ceeb-40e9-9846-0782fafd36d3","taskId":"ef4f5654-2214-47f5-adea-b47a304a9f25","agentName":"SupervisorAgent","correlationId":"7f878614-a2ba-4eac-a63a-70e717098c8b","occurredAt":"2026-09-15T17:32:03.475Z","payload":{"status":"queued"}}
+
+id: 3
+data: {"id":"1dd9323b-eda0-475a-9144-b073727aa5b9","seq":3,"type":"task.started","conversationId":"62a2544f-ceeb-40e9-9846-0782fafd36d3","taskId":"ef4f5654-2214-47f5-adea-b47a304a9f25","agentName":"SupervisorAgent","correlationId":"7f878614-a2ba-4eac-a63a-70e717098c8b","occurredAt":"2026-09-15T17:32:03.475Z","payload":{"status":"running"}}
+
+id: 4
+data: {"id":"0e7a501a-1f74-4e19-8856-a74efbb31e3e","seq":4,"type":"agent.started","conversationId":"62a2544f-ceeb-40e9-9846-0782fafd36d3","taskId":"ef4f5654-2214-47f5-adea-b47a304a9f25","agentName":"SupervisorAgent","correlationId":"7f878614-a2ba-4eac-a63a-70e717098c8b","occurredAt":"2026-09-15T17:32:03.476Z","payload":{}}
+
+id: 5
+data: {"id":"30cab660-63a4-4cc5-8b0d-c82b3b7fb65b","seq":5,"type":"task.created","conversationId":"62a2544f-ceeb-40e9-9846-0782fafd36d3","taskId":"69b13c29-b8a2-4aa8-822a-8e3d41f66023","agentName":"HotelSearchAgent","correlationId":"7f878614-a2ba-4eac-a63a-70e717098c8b","occurredAt":"2026-09-15T17:32:03.482Z","payload":{"status":"queued"}}
+
+id: 6
+data: {"id":"f9885b6c-947b-4ddd-abde-ef45cc60a264","seq":6,"type":"task.queued","conversationId":"62a2544f-ceeb-40e9-9846-0782fafd36d3","taskId":"69b13c29-b8a2-4aa8-822a-8e3d41f66023","agentName":"HotelSearchAgent","correlationId":"7f878614-a2ba-4eac-a63a-70e717098c8b","occurredAt":"2026-09-15T17:32:03.482Z","payload":{"status":"queued"}}
+
+id: 7
+data: {"id":"41568240-f236-4909-af49-9d5d79786f68","seq":7,"type":"supervisor.delegated","conversationId":"62a2544f-ceeb-40e9-9846-0782fafd36d3","taskId":"ef4f5654-2214-47f5-adea-b47a304a9f25","agentName":"SupervisorAgent","correlationId":"7f878614-a2ba-4eac-a63a-70e717098c8b","occurredAt":"2026-09-15T17:32:03.482Z","payload":{"childTaskId":"69b13c29-b8a2-4aa8-822a-8e3d41f66023","targetAgentName":"HotelSearchAgent"}}
+
+id: 8
+data: {"id":"88c662fe-acea-4268-b7c3-d196bb64f510","seq":8,"type":"agent.completed","conversationId":"62a2544f-ceeb-40e9-9846-0782fafd36d3","taskId":"ef4f5654-2214-47f5-adea-b47a304a9f25","agentName":"SupervisorAgent","correlationId":"7f878614-a2ba-4eac-a63a-70e717098c8b","occurredAt":"2026-09-15T17:32:03.482Z","payload":{}}
+
+id: 9
+data: {"id":"72e180a1-2fac-404d-94b4-a192366573d2","seq":9,"type":"task.completed","conversationId":"62a2544f-ceeb-40e9-9846-0782fafd36d3","taskId":"ef4f5654-2214-47f5-adea-b47a304a9f25","agentName":"SupervisorAgent","correlationId":"7f878614-a2ba-4eac-a63a-70e717098c8b","occurredAt":"2026-09-15T17:32:03.482Z","payload":{"status":"completed"}}
+
+id: 10
+data: {"id":"70256fcf-8d29-402f-a8ac-5f992b0d7f5e","seq":10,"type":"task.started","conversationId":"62a2544f-ceeb-40e9-9846-0782fafd36d3","taskId":"69b13c29-b8a2-4aa8-822a-8e3d41f66023","agentName":"HotelSearchAgent","correlationId":"7f878614-a2ba-4eac-a63a-70e717098c8b","occurredAt":"2026-09-15T17:32:03.482Z","payload":{"status":"running"}}
+
+id: 11
+data: {"id":"a7172721-68af-4a47-b9d2-4acf3f72f1ce","seq":11,"type":"agent.started","conversationId":"62a2544f-ceeb-40e9-9846-0782fafd36d3","taskId":"69b13c29-b8a2-4aa8-822a-8e3d41f66023","agentName":"HotelSearchAgent","correlationId":"7f878614-a2ba-4eac-a63a-70e717098c8b","occurredAt":"2026-09-15T17:32:03.482Z","payload":{}}
+
+id: 12
+data: {"id":"5a7289c2-e4b7-42e5-9d3c-887fb9103d4c","seq":12,"type":"tool.called","conversationId":"62a2544f-ceeb-40e9-9846-0782fafd36d3","taskId":"69b13c29-b8a2-4aa8-822a-8e3d41f66023","agentName":"HotelSearchAgent","correlationId":"7f878614-a2ba-4eac-a63a-70e717098c8b","occurredAt":"2026-09-15T17:32:03.484Z","payload":{"action":"search_hotels","argsPreview":[{"label":"Destination","value":"Demo Harbor"}]}}
+
+id: 13
+data: {"id":"317e79c1-41c5-4dd6-9f83-0c91bcc3e592","seq":13,"type":"tool.completed","conversationId":"62a2544f-ceeb-40e9-9846-0782fafd36d3","taskId":"69b13c29-b8a2-4aa8-822a-8e3d41f66023","agentName":"HotelSearchAgent","correlationId":"7f878614-a2ba-4eac-a63a-70e717098c8b","occurredAt":"2026-09-15T17:32:03.485Z","payload":{"action":"search_hotels"}}
+
+id: 14
+data: {"id":"a27774af-9397-42b6-ac4c-1512bfaafe22","seq":14,"type":"agent.completed","conversationId":"62a2544f-ceeb-40e9-9846-0782fafd36d3","taskId":"69b13c29-b8a2-4aa8-822a-8e3d41f66023","agentName":"HotelSearchAgent","correlationId":"7f878614-a2ba-4eac-a63a-70e717098c8b","occurredAt":"2026-09-15T17:32:03.485Z","payload":{}}
+
+id: 15
+data: {"id":"9d1e9878-4d38-4eb1-a553-abe571275010","seq":15,"type":"task.completed","conversationId":"62a2544f-ceeb-40e9-9846-0782fafd36d3","taskId":"69b13c29-b8a2-4aa8-822a-8e3d41f66023","agentName":"HotelSearchAgent","correlationId":"7f878614-a2ba-4eac-a63a-70e717098c8b","occurredAt":"2026-09-15T17:32:03.485Z","payload":{"status":"completed"}}
+

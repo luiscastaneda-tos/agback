@@ -1,9 +1,34 @@
 # HANDOFF — noktos-agent-backend
 
-**Estado:** ✅ **LOOP TERMINADO** — `READY_FOR_HUMAN_REVIEW` (2026-09-14)
+**Estado:** ✅ **LOOP TERMINADO** — `READY_FOR_HUMAN_REVIEW` (2026-09-14) · **Revisión humana real iniciada** (2026-09-15)
 **Rama:** `loop/agent-backend`
 **Tareas completadas:** 63 / 63 (`BE-000` a `BE-025`)
 **Worktree:** Limpio, todos los cambios integrados y verificados
+
+> [!IMPORTANT]
+> **V2 no reescribe este backend (`D-026`, 2026-09-15).** El frontend V2 es un proyecto
+> Next.js nuevo (ver `noktos-agent-frontend` `D-016`) que consume este backend existente.
+> Secuencia acordada: Next.js + mocks actuales primero → LLM real después (manteniendo
+> `DemoScriptedLlmProvider`) → LangGraph solo si se justifica → Noktos real al final (y
+> depende de que Noktos Core exista, cosa que hoy no es cierta — ver `Q-002` abajo). Plan
+> completo y decisiones de producto en **[`docs/workspace/PROGRESS.md`](./docs/workspace/PROGRESS.md)**
+> — esa es la copia canónica, trackeada por git, del progreso cross-repo (coordina
+> `noktos-auth`, este repo, `noktos-agent-frontend` y el futuro `noktos-agent-next`; vive
+> aquí solo por continuidad de git, no porque las decisiones sean exclusivas del backend).
+
+## 0. Revisión humana real — lo que se validó y lo que no (2026-09-15)
+
+Validado en navegador, contra este backend corriendo: flujo autenticado end-to-end,
+SSE en vivo, `demo:greeting` (task completa, respuesta proyectada), delegación
+Supervisor → `HotelSearchAgent` (parent/child correcto), mock de hoteles invocado
+(`[MOCK] Noktos hotel search adapter invoked.`), aprobación de `add_reservation_to_cart`
+tanto en camino Approve (`[MOCK] Noktos cart adapter invoked.` tras aprobar) como Reject
+(sin ejecución tras rechazar).
+
+**No probado todavía:** expiración/TTL de aprobaciones, `superseded`, rechazo de decisión
+por no-dueño de la conversación, reconexión/gap de SSE exhaustivo, idempotencia
+exhaustiva, ningún caso de seguridad o production-readiness. Detalle completo con
+trazabilidad de cada verificación: [`docs/workspace/PROGRESS.md`](./docs/workspace/PROGRESS.md).
 
 > [!NOTE]
 > `READY_FOR_HUMAN_REVIEW` es el estado terminal máximo previsto por el loop autónomo. No significa `PRODUCTION_READY`. V1 corre en memoria con datos ficticios y cliente de Noktos mockeado; la validación humana interactiva y la posterior migración a persistencia real quedan pendientes.

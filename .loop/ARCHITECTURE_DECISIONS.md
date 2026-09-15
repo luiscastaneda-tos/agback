@@ -784,6 +784,57 @@ Reconciles the frozen contract requirements (`contracts/http.md` and `contracts/
 - The Architect is authorized to dispatch a focused task (e.g. `BE-025-09`) with allowed paths: `src/http/conversation-tasks.controller.ts`, `src/http/http.module.ts`.
 - Once implemented and approved, the loop will transition to `READY_FOR_HUMAN_REVIEW`.
 
+## D-026 - V2 sequencing: mock-first Next.js integration, chokepoint preserved unconditionally
+
+Recorded by direct human decision (P-002, P-003, P-007, P-009, P-010, P-011 in
+workspace-root `PROGRESS.md`) on 2026-09-15, outside the autonomous loop — this repo's V1
+loop had already reached `READY_FOR_HUMAN_REVIEW` and is not being reopened by this
+decision. This is a sequencing/scope commitment, not a rewrite of V1 architecture.
+
+### 1. This repository is not rewritten for V2
+A new Next.js frontend, in a new sibling repository named `noktos-agent-next` (name/shape
+confirmed by direct human decision, `Q-P1`, resolved 2026-09-15, workspace-root
+`PROGRESS.md`; architecture record: `noktos-agent-frontend` `D-016`), becomes the V2 client
+of this existing NestJS backend. This backend is not rewritten, and its existing execution
+model is the one the new frontend integrates against.
+
+`noktos-agent-next` talks to this repository's HTTP/SSE API **directly** — `noktos-auth` is
+not introduced as a proxy for it (`Q-P3`, resolved same document). This backend's existing
+controllers, contract 1.0.0, and auth flow (Supabase token verification at this repo's own
+HTTP boundary, `D-018`) are the integration surface as-is; nothing here changes because the
+client is new.
+
+### 2. The execution chokepoint (D-002) is preserved unconditionally
+No future integration — new frontend, real LLM provider, LangGraph/LangChain (if ever
+adopted), or real `NoktosClient` — may bypass `Agent → ToolInvoker → schema validation →
+PolicyEngine → ApprovalEngine → ExecutorRegistry → Executor → NoktosClient`. This restates
+`D-002`; it does not weaken it, and no exception is granted to any V2 component by virtue
+of being new.
+
+### 3. Milestone sequencing (product decision, enforced here as a backend constraint)
+1. **V2-A** — this backend continues running `DemoScriptedLlmProvider` (`D-021`) and
+   `MockNoktosClient` (`D-016`, this file) behind the new Next.js frontend. No backend
+   rewrite; confirm the existing contract 1.0.0 surface is sufficient (it is, per
+   `PROGRESS.md` Phase 0 notes) before any backend code changes for V2-A.
+2. **V2-B** — a real LLM provider is added behind the existing `LlmProvider` interface
+   (`D-010`). `DemoScriptedLlmProvider` is kept, not removed, for deterministic
+   tests/demos/regression. `MockNoktosClient` remains in place during this step, to isolate
+   "does the AI work" from "does real Noktos work."
+3. **V2-C** — LangGraph/LangChain evaluated, not assumed. Not introduced in V2-A. If
+   adopted later it is bound by §2 above without exception — it must not become an
+   authority boundary for external actions.
+4. **V2-D+** — real `NoktosClient` integration, later, and out of scope for the estimates
+   in this decision. See workspace-root `PROGRESS.md` — Noktos Core itself does not exist
+   as a service yet, independent of the `noktos-auth` public-route gap already tracked in
+   `Q-002` below. This makes V2-D larger and less scoped than "swap the mock adapter"; it is
+   not estimated here.
+
+### 4. Does not reopen or reinterpret this repo's existing decisions
+`D-001` through `D-025` remain the authoritative record of V1. This entry does not change
+policy (`D-003`), approval mechanics (`D-005`–`D-008`), or any other frozen V1 decision — it
+only records the sequencing V2 work must follow inside the constraints those decisions
+already set.
+
 ## OPEN - escalate, never invent
 
 ### Q-001 - Durable persistence and retention
@@ -791,7 +842,9 @@ V1 is in-memory with fictional data. Retention, storage and PII handling for
 real conversations are undecided.
 
 ### Q-002 - Real Noktos integration
-Depends on noktos-auth exposing public routes. Until then the mock stands.
+Depends on noktos-auth exposing public routes. Until then the mock stands. **Additional
+finding (2026-09-15, see `PROGRESS.md`): Noktos Core itself does not yet exist as a
+service, independent of this route gap — both must be resolved before V2-D is possible.**
 
 ### Q-003 - Role-based approval
 Approval by someone other than the conversation owner depends on the noktos-auth

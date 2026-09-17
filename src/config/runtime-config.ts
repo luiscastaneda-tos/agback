@@ -4,6 +4,11 @@ export interface RuntimeConfig {
   readonly port: number;
   readonly llmProvider: string;
   readonly llmModel: string;
+  readonly openaiApiKey?: string;
+  readonly openaiModel?: string;
+  readonly openaiBaseUrl?: string;
+  readonly llmApiKey?: string;
+  readonly llmBaseUrl?: string;
   readonly approvalTtlMs: number;
   readonly noktosBaseUrl: string;
 }
@@ -92,12 +97,32 @@ function parseSupabaseUrl(value: string | undefined): string {
 }
 
 export function loadRuntimeConfig(): RuntimeConfig {
+  const llmProvider = requireNonEmpty('LLM_PROVIDER', process.env.LLM_PROVIDER);
+  const openaiApiKey = process.env.OPENAI_API_KEY?.trim() || process.env.LLM_API_KEY?.trim();
+
+  if (llmProvider === 'openai' && !openaiApiKey) {
+    throw new Error('Missing or empty environment variable: OPENAI_API_KEY');
+  }
+
+  const model = process.env.OPENAI_MODEL?.trim()
+    || process.env.LLM_MODEL?.trim()
+    || (llmProvider === 'openai' ? 'gpt-4o-mini' : 'fictional-demo-model');
+
+  const baseUrl = process.env.OPENAI_BASE_URL?.trim()
+    || process.env.LLM_BASE_URL?.trim()
+    || undefined;
+
   return {
     supabaseUrl: parseSupabaseUrl(process.env.SUPABASE_URL),
     supabaseAnonKey: parsePublicClientKey(process.env.SUPABASE_ANON_KEY),
     port: parseInteger('PORT', process.env.PORT, DEFAULT_PORT, 1, 65535),
-    llmProvider: requireNonEmpty('LLM_PROVIDER', process.env.LLM_PROVIDER),
-    llmModel: requireNonEmpty('LLM_MODEL', process.env.LLM_MODEL),
+    llmProvider,
+    llmModel: model,
+    openaiApiKey: openaiApiKey || undefined,
+    openaiModel: model,
+    openaiBaseUrl: baseUrl,
+    llmApiKey: openaiApiKey || undefined,
+    llmBaseUrl: baseUrl,
     approvalTtlMs: parseInteger(
       'APPROVAL_TTL_MS',
       process.env.APPROVAL_TTL_MS,

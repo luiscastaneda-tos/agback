@@ -1,12 +1,24 @@
 import type { RuntimeConfig } from '../config/runtime-config';
 import { DemoScriptedLlmProvider } from './demo-scripted-llm-provider';
 import { LlmProviderRegistry } from './llm-provider-registry';
+import { OpenAiLlmProvider } from './openai-llm-provider';
 
-/** Explicit DEMO / FICTIONAL / SCRIPTED composition; no fallback provider. */
 export function createDemoProviderRegistry(
-  config: Pick<RuntimeConfig, 'llmProvider' | 'llmModel'>,
+  config: RuntimeConfig,
 ): LlmProviderRegistry {
   const registry = new LlmProviderRegistry(config);
-  registry.register('demo-provider', new DemoScriptedLlmProvider());
+  const demoProvider = new DemoScriptedLlmProvider();
+  registry.register('demo-provider', demoProvider);
+
+  const apiKey = config.openaiApiKey || config.llmApiKey;
+  if (apiKey) {
+    const openaiProvider = new OpenAiLlmProvider({
+      apiKey,
+      baseUrl: config.openaiBaseUrl || config.llmBaseUrl,
+      fallbackProvider: demoProvider,
+    });
+    registry.register('openai', openaiProvider);
+  }
+
   return registry;
 }

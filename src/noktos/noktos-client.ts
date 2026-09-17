@@ -8,6 +8,9 @@ export interface HotelSearchResult {
   id: string;
   name: string;
   destination: string;
+  price?: number;
+  currency?: string;
+  description?: string;
 }
 
 export interface HotelSearchResponse {

@@ -118,7 +118,7 @@ export class SupervisorAgent {
         // The provider's tool shape transports an intent, with no executor.
         tools: [{
           name: DELEGATION_INTENT,
-          description: 'Request a fictional mock hotel search by HotelSearchAgent.',
+          description: 'Request a fictional mock hotel search by HotelSearchAgent. Provide a non-empty goal containing destination and query info.',
           argsSchema: z.toJSONSchema(delegationArgsSchema),
         }, {
           name: CART_TOOL,

@@ -44,10 +44,9 @@ Every claim below is tagged. Do not blur these categories:
 
 ## Current phase
 
-**V1 complete, in human review. V2 planning complete, implementation NOT started.**
-This document was produced by an inspection + planning pass on 2026-09-15. No V2 code
-exists yet in any repo. The next action is implementation, pending explicit human
-authorization (see **Next actions**).
+**V1 complete, in human review. V2 planning and Phase 0 interface freeze COMPLETE. Implementation of Track A / Track B unblocked in parallel upon human authorization (not started yet).**
+Phase 0 shared interface freeze is canonicalized in [V2_PHASE0_INTERFACE_FREEZE.md](V2_PHASE0_INTERFACE_FREEZE.md). No V2 code exists yet in any repo.
+
 
 ## Repo map
 
@@ -462,9 +461,10 @@ defines and writes down, before Track A and Track B start concurrently:
    URL, Supabase URL/anon key), mirroring current `VITE_*` vars. No secret ever gets a
    `NEXT_PUBLIC_` prefix.
 
-Output of Phase 0: a short written note (append to this file or a Phase-0-specific doc)
-that both tracks treat as frozen for the duration of V2-A. Changing it mid-flight requires
-stopping both tracks, not a unilateral edit by either.
+Output of Phase 0: **COMPLETED.** Canonical interface freeze is recorded in
+[`V2_PHASE0_INTERFACE_FREEZE.md`](V2_PHASE0_INTERFACE_FREEZE.md). Both tracks treat this specification
+as frozen for the duration of V2-A. Changing it mid-flight requires stopping both tracks, not a unilateral edit by either.
+
 
 ### Track A — Frontend / Next.js
 
@@ -665,21 +665,23 @@ not a deletion of the question:
 
 ## RESUME FROM HERE — the next action is unambiguous
 
-**Next action: Phase 0.** Everything needed to start it is already decided (`Q-P1`–`Q-P4`,
-all `P-xxx`). Nothing above is still blocking Phase 0 from starting.
+**Phase 0 is COMPLETED.** The canonical shared interface freeze is recorded in
+[`V2_PHASE0_INTERFACE_FREEZE.md`](V2_PHASE0_INTERFACE_FREEZE.md).
+
+**Next action:** Await human authorization to launch Track A and Track B in parallel.
+Neither track is marked as started yet.
 
 ```
 Phase 0 (sequential, one session/owner):
-  → Freeze the minimal shared interface for V2-A (see "Parallel work strategy — Phase 0"
-    above: endpoints, DTOs, the Q-P2-approved response projection's exact predicate,
-    approval flow — expected to be a short confirmation pass over contract 1.0.0, not a
-    redesign — plus NEXT_PUBLIC_* env naming).
+  → [COMPLETED] Interface freeze canonicalized in V2_PHASE0_INTERFACE_FREEZE.md
+    (endpoints, DTOs 1.0.0, Q-P2 narrowing predicate, approval flow, SSE model,
+     NEXT_PUBLIC_* env convention).
 
-Then, in parallel:
+Next (in parallel, upon human authorization):
   Track A — create `noktos-agent-next`, build chat / tasks / approvals / activity
-            (slices A0–A9, see table above).
+            (slices A0–A9, see table above; slice A0 creates repo).
   Track B — strictly necessary backend adaptations only (slices B0–B7, see table above;
-            expected to be mostly confirmation, not new code, per current contract review).
+            confirm minimal contract, prepare LLM extension seam).
 
 Then:
   Integration — DemoScriptedLlmProvider + MockNoktosClient, full V2-A stack, re-run the
@@ -697,18 +699,14 @@ Then:
 
 ## Next actions — ordered
 
-1. Human reviews and either commits or requests changes to the uncommitted `HttpTransport`
-   fix + regression test in `noktos-agent-frontend/`, and to the documentation changes in
-   this session (see *Workspace closure snapshot* below for the exact per-repo diff
-   classification and recommended commit split — nothing has been committed yet).
-2. Human authorizes start of Phase 0.
-3. Phase 0 output recorded (append to this file or a linked note).
-4. Track A slice A0 (create `noktos-agent-next`) and Track B slice B0 (confirm contract)
-   begin, in parallel, only after Phase 0 is written down.
-5. Proceed slice by slice per the tables above; re-run the *Integration checkpoint* smoke
-   test before declaring V2-A done.
-6. Only after V2-A is demoed: begin V2-B (real LLM) planning — do not start V2-B work
-   concurrently with V2-A "to save time"; `P-009` explicitly sequences it after.
+1. [COMPLETED] Human review and commit split for V1 review changes (`HttpTransport` fix + test in frontend, CORS fix + SSE fixtures + docs in backend).
+2. [COMPLETED] Human authorizes start of Phase 0.
+3. [COMPLETED] Phase 0 output recorded in [`V2_PHASE0_INTERFACE_FREEZE.md`](V2_PHASE0_INTERFACE_FREEZE.md).
+4. Human authorizes start of Track A and Track B in parallel.
+5. Track A slice A0 (create `noktos-agent-next`) and Track B slice B0 (confirm contract) begin, in parallel.
+6. Proceed slice by slice per the tables above; re-run the *Integration checkpoint* smoke test before declaring V2-A done.
+7. Only after V2-A is demoed: begin V2-B (real LLM) planning — do not start V2-B work concurrently with V2-A "to save time"; `P-009` explicitly sequences it after.
+
 
 ## Workspace closure snapshot (2026-09-15) — for remote handoff
 

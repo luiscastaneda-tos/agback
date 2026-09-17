@@ -16,19 +16,52 @@ import type {
 /** All names, identifiers and destinations are fictional demo fixtures. */
 const FICTIONAL_HOTELS: readonly Readonly<HotelSearchResult>[] = [
   {
+    id: 'mock-hotel-cancun-1',
+    name: 'Mock Resort Cancún Caribe',
+    destination: 'Cancún',
+    price: 3200,
+    currency: 'MXN',
+    description: 'Resort todo incluido frente al mar con 4 albercas y vista panorámica.',
+  },
+  {
+    id: 'mock-hotel-cancun-2',
+    name: 'Mock Cancún Oasis Hotel',
+    destination: 'Cancún',
+    price: 2450,
+    currency: 'MXN',
+    description: 'Hotel moderno en zona hotelera, ideal para descanso con desayuno buffet.',
+  },
+  {
+    id: 'mock-hotel-cancun-3',
+    name: 'Mock Playa Cancún Suites',
+    destination: 'Cancún',
+    price: 1890,
+    currency: 'MXN',
+    description: 'Suites confortables a 5 minutos de la playa con wifi de alta velocidad y terraza.',
+  },
+  {
     id: 'mock-hotel-001',
     name: 'Mock Lantern House',
     destination: 'Demo Harbor',
+    price: 1500,
+    currency: 'MXN',
+    description: 'Fictional demo hotel near the harbor.',
   },
   {
     id: 'mock-hotel-002',
     name: 'Mock Cloud Garden',
     destination: 'Demo Harbor',
+    price: 1750,
+    currency: 'MXN',
+    description: 'Fictional garden view demo hotel.',
   },
   {
     id: 'mock-hotel-003',
     name: 'Mock Starlight Lodge',
     destination: 'Demo Valley',
+    price: 2100,
+    currency: 'MXN',
+    description: 'Fictional valley lodge demo hotel.',
   },
 ];
 
@@ -89,12 +122,23 @@ export class MockNoktosClient implements NoktosClient {
   async searchHotels(input: HotelSearchInput): Promise<HotelSearchResponse> {
     console.info('[MOCK] Noktos hotel search adapter invoked.');
 
-    const destination = input.destination.trim().toLowerCase();
+    const normalize = (s: string) =>
+      s.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    const query = normalize(input.destination);
+    let matched = FICTIONAL_HOTELS.filter((hotel) => {
+      const dest = normalize(hotel.destination);
+      return dest === query || dest.includes(query) || query.includes(dest);
+    });
+
+    // Fallback to Cancun mock hotels if no direct match was found
+    if (matched.length === 0) {
+      matched = FICTIONAL_HOTELS.filter((hotel) => normalize(hotel.destination) === 'cancun');
+    }
+
     return {
       mock: true,
-      hotels: FICTIONAL_HOTELS
-        .filter((hotel) => hotel.destination.toLowerCase() === destination)
-        .map((hotel) => ({ ...hotel })),
+      hotels: matched.map((hotel) => ({ ...hotel })),
     };
   }
 }

@@ -274,10 +274,74 @@ async function testApprovedActionReusesStoredArgumentsWithoutLlm() {
   assert.equal(outcome.result.summary, 'Fictional mock reservation added to the cart after owner approval.');
 }
 
+async function testSupervisorResultsIncludeNaturalSpanishText() {
+  const cases = [
+    {
+      outcome: { kind: 'delegated', goal: 'Busca hoteles en Cancún.' },
+      expectedText: 'Estoy buscando opciones de hoteles...',
+      expectedData: { childTaskId: 'child-task-1' },
+      expectedSummary: 'Fictional mock hotel search queued with HotelSearchAgent.',
+    },
+    {
+      outcome: {
+        kind: 'cart_completed',
+        data: { mock: true, cartItemId: 'cart-item-1', status: 'added' },
+      },
+      expectedText: 'Listo, agregué la reservación al carrito.',
+      expectedData: { mock: true, cartItemId: 'cart-item-1', status: 'added' },
+      expectedSummary: 'Fictional mock reservation added to the cart after owner approval.',
+    },
+    {
+      outcome: {
+        kind: 'confirmation_completed',
+        data: { mock: true, bookingId: 'booking-1', status: 'confirmed' },
+      },
+      expectedText: 'Listo, confirmé la reserva.',
+      expectedData: { mock: true, bookingId: 'booking-1', status: 'confirmed' },
+      expectedSummary: 'Fictional mock booking confirmed after owner approval.',
+    },
+    {
+      outcome: {
+        kind: 'cancellation_completed',
+        data: { mock: true, bookingId: 'booking-1', status: 'cancelled' },
+      },
+      expectedText: 'Listo, cancelé la reserva.',
+      expectedData: { mock: true, bookingId: 'booking-1', status: 'cancelled' },
+      expectedSummary: 'Fictional mock booking cancelled after owner approval.',
+    },
+  ];
+
+  for (const [index, testCase] of cases.entries()) {
+    const processor = new SupervisorTaskProcessor(
+      { async run() { return testCase.outcome; } },
+      { delegateHotelSearch() { return 'child-task-1'; } },
+      { publish() {} },
+      { getContext() { return {}; }, appendMessage() {} },
+      { findById() { return undefined; } },
+    );
+    const processed = await processor.process({
+      id: `natural-text-${index}`,
+      conversationId: 'conversation-natural-text',
+      agentName: 'SupervisorAgent',
+      status: 'running',
+      goal: 'fixture',
+    }, { correlationId: `correlation-${index}` });
+
+    assert.equal(processed.kind, 'completed');
+    assert.deepEqual(processed.result.data, {
+      text: testCase.expectedText,
+      ...testCase.expectedData,
+    });
+    assert.ok(processed.result.data.text.trim().length > 0);
+    assert.equal(processed.result.summary, testCase.expectedSummary);
+  }
+}
+
 await testGroundedSupervisorContext();
 await testCapturedHotelSearchIsStored();
 await testDemoShortCircuitAndApprovalFlow();
 await testApprovedActionReusesStoredArgumentsWithoutLlm();
+await testSupervisorResultsIncludeNaturalSpanishText();
 testIsolationAndBounds();
 
 console.log('conversation memory tests passed');

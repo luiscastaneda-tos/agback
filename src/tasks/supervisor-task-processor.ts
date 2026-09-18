@@ -95,6 +95,7 @@ export class SupervisorTaskProcessor implements TaskProcessor {
             result: {
               kind: 'answer',
               data: {
+                text: 'Listo, agregué la reservación al carrito.',
                 mock: outcome.data.mock,
                 cartItemId: outcome.data.cartItemId,
                 status: outcome.data.status,
@@ -109,6 +110,7 @@ export class SupervisorTaskProcessor implements TaskProcessor {
             result: {
               kind: 'answer',
               data: {
+                text: 'Listo, confirmé la reserva.',
                 mock: outcome.data.mock,
                 bookingId: outcome.data.bookingId,
                 status: outcome.data.status,
@@ -123,6 +125,7 @@ export class SupervisorTaskProcessor implements TaskProcessor {
             result: {
               kind: 'answer',
               data: {
+                text: 'Listo, cancelé la reserva.',
                 mock: outcome.data.mock,
                 bookingId: outcome.data.bookingId,
                 status: outcome.data.status,
@@ -165,7 +168,10 @@ export class SupervisorTaskProcessor implements TaskProcessor {
             kind: 'completed',
             result: {
               kind: 'delegated',
-              data: { childTaskId },
+              data: {
+                text: 'Estoy buscando opciones de hoteles...',
+                childTaskId,
+              },
               summary: 'Fictional mock hotel search queued with HotelSearchAgent.',
             },
           };

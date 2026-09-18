@@ -375,6 +375,40 @@ persistence, better recovery, role-aware UX, formal accessibility, commercial de
 `Q-003` (accessibility target) remain open in that repo's own log and are **not** V2
 requirements.
 
+### P-013 — Demo-First Delivery Priority for V2-A
+**Status:** ACCEPTED (DECISION, 2026-09-17)
+**Decision:** The priority for V2-A is DEMO-FIRST. The delivery milestone focuses strictly on an end-to-end functional demo for "Busca hoteles en Cancún para dos personas". Non-blocking documentation refinements, complex recovery, and architectural expansion are deferred.
+**Rationale:** Meet the immediate delivery deadline with a fully working, observable multi-agent product rather than getting blocked in exhaustive hardening.
+
+### P-014 — Real LLM Scoped Exclusively to OpenAI (`OpenAiLlmProvider`)
+**Status:** ACCEPTED (DECISION, 2026-09-17)
+**Decision:** The real LLM provider for V2-A is strictly OpenAI using the official `openai` SDK (`openai: ^7.17.0`). No universal multi-vendor abstraction (Anthropic, Gemini, Ollama) is built for this milestone. Extensibility is preserved by implementing the existing `LlmProvider` interface.
+**Configuration:** Backend-only via `LLM_PROVIDER=openai`, `OPENAI_API_KEY` (strictly never exposed to frontend or committed), and `OPENAI_MODEL` (defaulting to `gpt-4o-mini`).
+
+### P-015 — Structured Supervisor Intent Routing (Zero Direct Tool Execution by LLM)
+**Status:** ACCEPTED (DECISION, 2026-09-17)
+**Decision:** The Supervisor produces validated structured intents only (`delegate_to_hotel_search` with destination/goal, direct response, or reservation tools) validated via Zod schemas. OpenAI NEVER executes tools directly.
+**Pipeline:** The runtime sovereign pipeline (`SupervisorAgent -> TaskProcessor -> HotelSearchAgent -> ToolInvoker -> PolicyEngine -> ApprovalEngine -> Executor -> MockNoktosClient`) owns all execution. Malformed LLM outputs fail-safe without invoking any tools.
+
+### P-016 — Strict Mock Hotel Grounding & Accent Normalization
+**Status:** ACCEPTED (DECISION, 2026-09-17)
+**Decision:** All hotel information must originate from `MockNoktosClient` (3 consistent Cancún mock hotels: Mock Resort Cancún Caribe, Mock Cancún Oasis Hotel, Mock Playa Cancún Suites with prices in MXN, currency, and descriptions). Destination matching is accent- and case-insensitive (`normalize('NFD')`).
+**Instructions:** The subagent's prompt strictly mandates using ONLY the mock hotel tool results, never inventing hotels/pricing/availability, and presenting them in conversational Spanish.
+
+### P-017 — Simple, Non-CoT Agent Activity Visualization
+**Status:** ACCEPTED (DECISION, 2026-09-17)
+**Decision:** In `noktos-agent-next`, visualize agent coordination simply and cleanly without technical clutter.
+**Visual Steps:**
+- `Supervisor — Analizando solicitud...`
+- `Agente de hoteles — Buscando hoteles en Cancún...`
+- `Agente de hoteles — 3 opciones encontradas`
+- `Supervisor — Respuesta preparada`
+**Strict Exclusions:** Zero chain-of-thought, zero internal reasoning, zero raw prompts, zero raw JSON, zero UUIDs, and zero auth tokens/secrets in the user-facing view. Displayed inline in chat and in a dedicated "Agentes" sidebar tab.
+
+### P-018 — Deterministic Fallback & Human Approval Preservation
+**Status:** ACCEPTED (DECISION, 2026-09-17)
+**Decision:** `DemoScriptedLlmProvider` is retained as an unconditional fallback. Queries starting with `demo:` automatically route to the scripted provider. Setting `LLM_PROVIDER=demo-provider` allows immediate offline demo execution. The human approval chokepoint (`demo:add-reservation-to-cart`) remains fully intact with interactive in-chat approval cards and strict idempotency.
+
 ---
 
 ## Architecture decisions updated (`D-xxx`, per-repo)

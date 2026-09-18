@@ -19,6 +19,18 @@ This workspace holds four repositories:
 
 ---
 
+## 📌 Decisiones Clave de la Demo (P-013 a P-018)
+
+1. **P-013 — Prioridad Demo-First:** Enfoque prioritario en una entrega funcional end-to-end para la demo ("Busca hoteles en Cancún para dos personas"), postergando hardening y documentación secundaria.
+2. **P-014 — Proveedor Real únicamente OpenAI:** Proveedor real acotado a OpenAI con el SDK oficial `openai: ^7.17.0` (`OpenAiLlmProvider`). Cero dependencias multi-vendor complejas para la demo.
+3. **P-015 — Enrutamiento Estructurado del Supervisor:** OpenAI devuelve decisiones estructuradas (`delegate_to_hotel_search` o respuesta) validadas con Zod. OpenAI **nunca** ejecuta tools directamente.
+4. **P-016 — Grounding Estricto en Mock:** 3 hoteles ficticios en Cancún en `MockNoktosClient` con precios en MXN, moneda y descripciones. El LLM tiene prohibido inventar hoteles. Búsqueda tolerante a acentos (`Cancún` = `cancun`).
+5. **P-017 — Visualización Simple (Sin Chain-of-Thought):** El frontend solo muestra estados operacionales simples (`Supervisor analizando...`, `Agente de hoteles buscando...`, `3 opciones encontradas`, `Respuesta preparada`). Cero CoT, cero JSON, cero UUIDs.
+6. **P-018 — Fallback Determinista y Aprobaciones:** `demo:*` y `demo-provider` se conservan para contingencias offline. Chokepoint de aprobación humana de carrito intacto.
+7. **Fuera de alcance:** LangGraph, LangChain, Noktos real, memoria RAG/vectores, follow-ups complejos y branding.
+
+---
+
 ## Estado Actual: Milestone V2-A Demo Completado
 
 Se completó de punta a punta la integración para la demo:

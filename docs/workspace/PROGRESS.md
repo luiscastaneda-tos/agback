@@ -54,7 +54,7 @@ Real OpenAI LLM integration (`OpenAiLlmProvider`), natural-language hotel delega
 | `noktos-auth` | `noktos-auth/` | Identity gateway (Supabase → `Principal`, API keys, future Core JWT boundary). No public HTTP routes yet. | `READY_FOR_HUMAN_REVIEW`, 29/29 tasks, no HUMAN_GATE |
 | `noktos-agent-backend` | `noktos-agent-backend/` | NestJS multi-agent runtime: SupervisorAgent, HotelSearchAgent, execution chokepoint, approvals, SSE. | **V2-A COMPLETE & PUSHED (`loop/agent-backend`)**. OpenAiLlmProvider with structured tool routing, mock grounding, deterministic fallback. |
 | `noktos-agent-frontend` | `noktos-agent-frontend/` | React + Vite chat/task/approval UI, consumes backend contract 1.0.0. **Frozen as V1 baseline per P-001** — no further feature work goes here. | `READY_FOR_HUMAN_REVIEW`, 46/46 tasks, no HUMAN_GATE |
-| `noktos-agent-next` | `noktos-agent-next/` | V2 chat/task/approval/activity UI. Talks directly to `noktos-agent-backend` (`P-001`). | **V2-A COMPLETE (`main`)**. Next.js 16 (Turbopack), contract locked v1.0.0, SSE client, simple agent activity visualization, contextual approvals. |
+| `noktos-agent-next` | `noktos-agent-next/` | V2 chat/task/approval/activity UI. Talks directly to `noktos-agent-backend` (`P-001`). | **V2-A COMPLETE & PUSHED (`main` → `AngelCstd/next_agent`)**. Next.js 16 (Turbopack), contract locked v1.0.0, SSE client, simple agent activity visualization, contextual approvals. |
 
 Each repo has its own `CLAUDE.md`/`AGENTS.md`: **Claude Code is Supervisor only in every one
 of them — never the implementer of product code.** Product code changes go through each

@@ -15,7 +15,7 @@ This workspace holds four repositories:
 | `noktos-auth` | `loop/noktos-auth` | `AngelCstd/proyecto_esc` | `READY_FOR_HUMAN_REVIEW`, 29/29 tasks, no HUMAN_GATE |
 | `noktos-agent-backend` (`agback`) | `loop/agent-backend` | `luiscastaneda-tos/agback` | **V2-A COMPLETE & PUSHED**. OpenAiLlmProvider (`openai: ^7.17.0`), natural-language hotel delegation, mock grounding, deterministic fallback, approvals intact. |
 | `noktos-agent-frontend` (`agfront`) | `loop/agent-frontend` | `luiscastaneda-tos/agfront` | `READY_FOR_HUMAN_REVIEW`, 46/46 tasks. Frozen as V1 baseline per `P-001`. |
-| `noktos-agent-next` | `main` | *(local repository)* | **V2-A COMPLETE**. Next.js 16 (Turbopack), contract locked v1.0.0, SSE stream, simple agent activity visualization, contextual approvals. |
+| `noktos-agent-next` | `main` | `AngelCstd/next_agent` | **V2-A COMPLETE & PUSHED**. Next.js 16 (Turbopack), contract locked v1.0.0, SSE stream, simple agent activity visualization, contextual approvals. |
 
 ---
 

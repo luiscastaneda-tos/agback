@@ -122,3 +122,73 @@ Abre en el navegador: **`http://localhost:3001`**.
   - `npm run verify:contracts`: PASS (contratos v1.0.0 idénticos a `contracts.lock`).
   - `npm run build`: Next.js 16.3.5 Turbopack compilado en producción (4 rutas estáticas generadas).
   - `npm run lint`: 0 errores, 0 warnings.
+
+---
+
+## 2026-09-18 (session 2) — Estado actual, UX hardening y fix de aprobación
+
+**Este bloque es el estado vigente.** Lo de arriba (P-013 a P-018, "Cómo Levantar la Demo Mañana",
+"Verificaciones Ejecutadas") sigue siendo correcto como referencia de arranque y de las decisiones
+de la demo inicial — no se contradice, solo se complementa. Para el detalle completo de decisiones
+y roadmap, ver `PROGRESS.md` en este mismo directorio, sección **"2026-09-18 (session 2) — CURRENT
+STATE"** (autoridad para el próximo milestone).
+
+### HEADs reales al cierre de esta sesión
+
+- `noktos-agent-backend` / `loop/agent-backend`: **`ab8fab8`** — `fix: natural Spanish text for
+  delegated/cart/confirm/cancel results`.
+- `next_agent` / `main`: **`de944f8`** — `fix: stabilize chat auto-scroll and compact approval
+  cards`.
+
+Confirma siempre con `git log -5 --oneline`, `git status`, `git branch --show-current` antes de
+asumir que estos hashes siguen siendo el HEAD — no los tomes como verdad si el repo avanzó desde
+entonces.
+
+### Qué se corrigió/agregó desde "Milestone V2-A Demo Completado"
+
+1. **Memoria conversacional mínima** (`src/memory/`, commits `30b400c`/`594468e`): contexto por
+   `conversationId` (mensajes recientes + última búsqueda de hoteles estructurada), usado para
+   responder follow-ups ("¿cuál es más barato?") sin re-delegar ni inventar.
+2. **Fix de aprobación post-approve**: el chat a veces se quedaba "callado" después de aprobar. Causa
+   real: al reanudar, se volvía a invocar al LLM desde cero, que podía regenerar los argumentos del
+   tool ligeramente distinto y fallar el chequeo de `payloadHash`, abriendo una segunda aprobación en
+   silencio. Fix: `ApprovalRequest` ahora guarda `validatedArguments` (nunca expuesto por HTTP) y al
+   reanudar se ejecuta directo con esos argumentos vía `SupervisorAgent.runApprovedAction()`, sin
+   segunda llamada al LLM, sin tocar el chokepoint de ejecución.
+3. **Copy natural en español**: `SupervisorTaskProcessor` ahora pone `data.text` natural (antes solo
+   `summary` técnico en inglés) para `delegated`/`cart_completed`/`confirmation_completed`/
+   `cancellation_completed`. `summary` se conserva igual para uso técnico/debug.
+4. **UX del frontend** (`next_agent`, ver su propio `HANDOFF.md` para el detalle completo): activity
+   y approval cards compactas/collapsibles y turn-scoped, layout de chat con scroll interno real,
+   auto-scroll sticky-bottom confiable, sin botones de demo visibles, sin request storm, sin
+   duplicados de mensajes.
+
+### Nota de proceso importante
+
+Todo lo anterior se implementó vía sesiones de Codex CLI acotadas (`codex exec --sandbox
+workspace-write`), dirigidas y verificadas independientemente por una sesión supervisora de Claude
+Code — nunca confiando solo en el self-report del implementer. Esto importó en la práctica: un
+cambio de backend rompió el grafo de inyección de dependencias de Nest de una forma que ni `tsc` ni
+los tests existentes detectaron (los tests instancian clases directamente, sin pasar por el
+contenedor de Nest) — solo arrancar la app compilada de verdad (`node dist/main.js`) lo reveló. Para
+cualquier cambio que toque wiring de módulos, composición en runtime, o flujos async/event-driven,
+**arrancar la app real es parte obligatoria de la verificación, no opcional.**
+
+### RESUME FROM HERE
+
+Ver `PROGRESS.md` de este mismo directorio, sección **"2026-09-18 (session 2) — CURRENT STATE"**,
+que contiene las instrucciones completas de reanudación (próximo milestone: **non-blocking
+conversation / concurrent turns**) para no duplicarlas aquí. El `HANDOFF.md` de `next_agent` tiene
+la contraparte frontend de esas mismas instrucciones, con el escenario objetivo concreto.
+
+### NEXT CHAT STARTER PROMPT
+
+> Lee `CLAUDE.md`, `AGENTS.md`, `HANDOFF.md` y `docs/workspace/PROGRESS.md` de
+> `noktos-agent-backend`, y `CLAUDE.md`, `AGENTS.md`, `HANDOFF.md` de `next_agent`. Usa Git
+> (`git log`, `git status`, `git branch --show-current`) como autoridad para el HEAD y estado real
+> de cada repo — no asumas que los hashes documentados siguen vigentes. Sigue la sección "RESUME
+> FROM HERE" al pie de la letra. No revises el roadmap desde cero ni me preguntes qué sigue: el
+> próximo milestone ya está decidido — **non-blocking conversation / concurrent turns**. Actúa como
+> Supervisor/Orchestrator (no implementes código de producto tú mismo), usa Codex CLI para
+> cualquier cambio de código real en ambos repos, verifica todo de forma independiente (incluyendo
+> arrancar la app real si el cambio toca wiring/async), y repórtame solo al final.

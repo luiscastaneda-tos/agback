@@ -69,6 +69,121 @@ instruction, `.loop/HUMAN_GATE.md` was left untouched** as historical evidence r
 a human should delete it (or formally record its resolution per its own "Continue" steps) before
 the `.loop/` harness is used again for this repo.
 
+---
+
+## 2026-09-18 (session 2) — CURRENT STATE, READ THIS FIRST
+
+**This section supersedes every earlier "RESUME FROM HERE" / "Next actions" section below.** The
+V2-A planning sections further down (Phase 0, Track A/B, `Q-P1`–`Q-P4`) describe a milestone that
+is now **long complete** — kept only for historical provenance, not as a live plan. Do not resume
+from anything below this section without first reading this one.
+
+### Product definition (binding — do not describe this as "just a multi-agent chatbot")
+
+**Noktos Agent Workspace**: a conversational and operational interface where a Supervisor
+coordinates specialized Noktos agents, the user converses normally, agent operational activity is
+observable, tasks/subagents execute observably with parent/child correlation, sensitive actions
+require human approval before any real side effect, OpenAI is a real live LLM, and domain data
+(hotels, reservations) still comes from mocks — real Noktos integration is a later, separately
+scoped milestone (see `P-011`; Noktos Core does not exist as a service anywhere in this workspace).
+
+### What's implemented and validated, right now
+
+**Backend** (this repo, `loop/agent-backend`, HEAD `ab8fab8`): NestJS; `OpenAiLlmProvider` (real
+OpenAI) with `DemoScriptedLlmProvider` retained as a deterministic fallback
+(`LLM_PROVIDER=demo-provider`); `SupervisorAgent` + `HotelSearchAgent` with natural-language
+delegation and Zod-validated structured routing (OpenAI never executes anything directly); the full
+execution chokepoint (`ToolInvoker` → schema validation → `PolicyEngine` → approval
+validation/consumption → `ExecutorRegistry` → Executor → `NoktosClient`/`MockNoktosClient`) intact
+and unconditionally enforced (`.loop/scripts/check-layering.sh`, 0 violations); mock hotel search
+(3 Cancún hotels, accent/case-insensitive matching); a minimal in-memory multi-turn conversation
+memory (`src/memory/`, keyed by `conversationId`, bounded to 16 recent messages + last structured
+hotel search) grounding follow-ups like "¿cuál es más barato?"; **approval resume that replays the
+exact validated arguments the human approved instead of asking the LLM to regenerate them** (fixes
+a real intermittent bug where a second, independent LLM call could produce slightly different tool
+arguments, fail the `payloadHash` check, and silently open a second pending approval instead of
+executing); natural Spanish `data.text` for delegated/cart/confirm/cancel results (previously only
+an English technical `summary` was available, which is why the old UI sometimes showed strings like
+`"Fictional mock reservation added to the cart after owner approval."` verbatim — that's fixed).
+
+**Frontend** (`next_agent`, `main`, HEAD `de944f8` — see its own `HANDOFF.md`/`PROGRESS.md` for full
+detail, not duplicated here): Supabase login, chat, SSE, turn-scoped compact/collapsible agent
+activity (keyed by `taskId`/`parentTaskId`, never `agentName` — a real bug from an earlier pass,
+fixed), compact/collapsible approval cards, a real fixed-height chat viewport with reliable
+sticky-bottom auto-scroll (survives its own scroll animation — a real bug, fixed), no visible demo
+buttons (the `demo:*` fallback commands still work if typed manually), request coalescing (SSE
+event classification + debouncing, replacing a prior request-storm bug), a dev-mode double-init
+guard, and per-`taskId` message dedupe.
+
+**Everything above was implemented via scoped Codex CLI sessions** (`codex exec --sandbox
+workspace-write`), directed and *independently* verified by a Claude Code supervisor session in
+both repos — not just trusting the implementer's self-reported build/test results. This mattered in
+practice: one backend change initially broke Nest's dependency-injection graph in a way `tsc` and
+the existing unit tests (which construct classes directly, bypassing Nest's DI container) did not
+catch — only actually booting the compiled app (`node dist/main.js`) surfaced it. Keep applying that
+discipline: a green build/test run is necessary, never sufficient, for anything touching module
+wiring, runtime composition, or async/event-driven flows.
+
+### Roadmap — decided, sequenced, do not collapse into one milestone
+
+1. **Non-blocking conversation / concurrent turns** ← next, immediate milestone (see below)
+2. Multi-turn memory extended/confirmed under concurrency (a minimal version already exists,
+   commits `30b400c`/`594468e` — this step is about verifying/extending it, not building it fresh)
+3. Entity/result selection ("el segundo", "ese hotel")
+4. `TravelerAgent`
+5. `ReservationAgent` (full)
+6. Durable persistence
+7. Real Noktos integration
+
+**MCP** (a future `Noktos MCP Server`, reached as `Agent Workspace → ToolInvoker/Policy/Approval →
+MCP Client → Noktos MCP Server → Noktos APIs` — **never** LLM → MCP directly, which would bypass
+the execution chokepoint) is a later architectural direction. **Do not implement it now**, and do
+not place it before concurrency or memory in sequencing.
+
+**Not scheduled in detail yet, explicitly out of scope for all of the above:** LangGraph/LangChain,
+multi-provider LLM, RAG/embeddings/semantic memory beyond the simple structured recall already
+built, full branding, production hardening, advanced RBAC, production observability.
+
+**Memory direction, already decided for when milestone 2 above comes up:** in-memory only, keyed by
+`conversationId`/user, holding recent messages + structured hotel-search results, eventually a
+`selectedHotel`. Not LangGraph, not Redis (initially), not a vector DB, not embeddings, not RAG.
+
+### RESUME FROM HERE
+
+**NEXT ACTION: implement non-blocking conversation / concurrent turns.** This is decided — do not
+re-open the roadmap discussion, do not ask what to build next.
+
+**FIRST:** read this repo's `CLAUDE.md`/`AGENTS.md` and `HANDOFF.md`, and `next_agent`'s
+`HANDOFF.md` (it carries the frontend-side detail of this same milestone, including the exact
+target scenario and design principles — not duplicated here to avoid drift between the two copies).
+
+**THEN, before changing any backend code:** determine whether `noktos-agent-backend` already
+supports multiple concurrent root (`SupervisorAgent`) tasks within the same `conversationId`.
+Inspect `MessageSubmissionService`, `TaskQueueService`, `SupervisorTaskProcessor`, the
+conversation/task stores, and SSE ordering/correlation — do not assume serialization exists, and do
+not assume it doesn't. `TaskQueueService`'s `drain()` loop processes one queue entry at a time via
+`await this.process(entry)` in a `while` loop drained by `queueMicrotask` — read it closely to
+determine whether this is a real per-conversation serialization point or just an implementation
+detail of one global FIFO queue that happens to interleave fine across conversations/tasks already.
+
+**If concurrency already works:** do not redesign anything — the milestone may already be
+substantially frontend-only (verifying/adjusting the UI so it doesn't itself serialize, e.g. an
+`isSending` flag gating the whole input rather than just the in-flight `POST /messages` call).
+
+**If there's artificial serialization:** make the minimal change. The execution chokepoint
+(`ToolInvoker`/`PolicyEngine`/`ApprovalEngine`/`ExecutorRegistry`) stays exactly as-is regardless —
+this milestone is about task/message concurrency, not about touching the authority path.
+
+**Use Codex CLI for any actual product-code change**, per this repo's own `CLAUDE.md`. Verify
+independently (build, `check-layering.sh`, tests, **and an actual app boot** if anything touches
+module wiring or async task processing) before committing.
+
+**Do NOT, in this pass:** start multi-turn memory work (already exists in minimal form — this
+milestone is about concurrency, not memory), add MCP, add LangGraph/LangChain, or refactor anything
+unrelated to concurrent turns.
+
+---
+
 ## Repo map
 
 | Repo | Path | Role | State |

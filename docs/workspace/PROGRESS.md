@@ -44,18 +44,17 @@ Every claim below is tagged. Do not blur these categories:
 
 ## Current phase
 
-**V1 complete, in human review. V2 planning and Phase 0 interface freeze COMPLETE. Implementation of Track A / Track B unblocked in parallel upon human authorization (not started yet).**
-Phase 0 shared interface freeze is canonicalized in [V2_PHASE0_INTERFACE_FREEZE.md](V2_PHASE0_INTERFACE_FREEZE.md). No V2 code exists yet in any repo.
-
+**V2-A Demo Milestone COMPLETE.**
+Real OpenAI LLM integration (`OpenAiLlmProvider`), natural-language hotel delegation to `HotelSearchAgent`, 3 consistent Cancún mock hotels in `MockNoktosClient`, deterministic `demo:*` fallback, human approvals chokepoint, and simple agent activity visualization in `noktos-agent-next` (Next.js 16 Turbopack) are all implemented, tested, and verified.
 
 ## Repo map
 
 | Repo | Path | Role | State |
 |---|---|---|---|
 | `noktos-auth` | `noktos-auth/` | Identity gateway (Supabase → `Principal`, API keys, future Core JWT boundary). No public HTTP routes yet. | `READY_FOR_HUMAN_REVIEW`, 29/29 tasks, no HUMAN_GATE |
-| `noktos-agent-backend` | `noktos-agent-backend/` | NestJS multi-agent runtime: SupervisorAgent, HotelSearchAgent, execution chokepoint, approvals, SSE. | `READY_FOR_HUMAN_REVIEW`, 63/63 tasks, no HUMAN_GATE |
+| `noktos-agent-backend` | `noktos-agent-backend/` | NestJS multi-agent runtime: SupervisorAgent, HotelSearchAgent, execution chokepoint, approvals, SSE. | **V2-A COMPLETE & PUSHED (`loop/agent-backend`)**. OpenAiLlmProvider with structured tool routing, mock grounding, deterministic fallback. |
 | `noktos-agent-frontend` | `noktos-agent-frontend/` | React + Vite chat/task/approval UI, consumes backend contract 1.0.0. **Frozen as V1 baseline per P-001** — no further feature work goes here. | `READY_FOR_HUMAN_REVIEW`, 46/46 tasks, no HUMAN_GATE |
-| `noktos-agent-next` | *(sibling repo, not yet created)* | V2 chat/task/approval/activity UI. Talks directly to `noktos-agent-backend` (`P-001`; routing confirmed by `Q-P3`, resolved — no `noktos-auth` proxy). | **RESOLVED (P-001, 2026-09-15): name and shape decided. Repo not created yet — creating it is Track A slice A0, pending Phase 0.** |
+| `noktos-agent-next` | `noktos-agent-next/` | V2 chat/task/approval/activity UI. Talks directly to `noktos-agent-backend` (`P-001`). | **V2-A COMPLETE (`main`)**. Next.js 16 (Turbopack), contract locked v1.0.0, SSE client, simple agent activity visualization, contextual approvals. |
 
 Each repo has its own `CLAUDE.md`/`AGENTS.md`: **Claude Code is Supervisor only in every one
 of them — never the implementer of product code.** Product code changes go through each

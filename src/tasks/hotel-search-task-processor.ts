@@ -1,5 +1,6 @@
 import type { HotelSearchAgent, HotelSearchAgentOutcome } from '../agents/hotel-search/hotel-search.agent';
 import type { EventBusService } from '../events/event-bus.service';
+import type { ConversationMemoryStore } from '../memory/conversation-memory.store';
 import type { ToolContext } from '../tools/agent-runtime';
 import type { AgentTask } from './agent-task';
 import type {
@@ -12,6 +13,7 @@ export class HotelSearchTaskProcessor implements TaskProcessor {
   constructor(
     private readonly hotelSearch: HotelSearchAgent,
     private readonly eventBus: EventBusService,
+    private readonly memory: ConversationMemoryStore,
   ) {}
 
   async process(
@@ -54,6 +56,13 @@ export class HotelSearchTaskProcessor implements TaskProcessor {
       }
       switch (outcome.kind) {
         case 'completed':
+          if (outcome.hotelSearch !== undefined) {
+            this.memory.setLastHotelSearch(task.conversationId, outcome.hotelSearch);
+          }
+          this.memory.appendMessage(task.conversationId, {
+            role: 'assistant',
+            text: outcome.text,
+          });
           this.eventBus.publish({ ...lifecycle, type: 'agent.completed' });
           return {
             kind: 'completed',

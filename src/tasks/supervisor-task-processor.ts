@@ -1,5 +1,6 @@
 import type { SupervisorAgent, SupervisorAgentOutcome } from '../agents/supervisor/supervisor.agent';
 import type { EventBusService } from '../events/event-bus.service';
+import type { ConversationMemoryStore } from '../memory/conversation-memory.store';
 import type { ToolContext } from '../tools/agent-runtime';
 import type { AgentTask } from './agent-task';
 import type { TaskDelegationService } from './task-delegation.service';
@@ -14,6 +15,7 @@ export class SupervisorTaskProcessor implements TaskProcessor {
     private readonly supervisor: SupervisorAgent,
     private readonly delegation: TaskDelegationService,
     private readonly eventBus: EventBusService,
+    private readonly memory: ConversationMemoryStore,
   ) {}
 
   async process(
@@ -49,13 +51,21 @@ export class SupervisorTaskProcessor implements TaskProcessor {
       let outcome: SupervisorAgentOutcome;
       this.eventBus.publish({ ...lifecycle, type: 'agent.started' });
       try {
-        outcome = await this.supervisor.run(task.goal, toolContext);
+        outcome = await this.supervisor.run(
+          task.goal,
+          toolContext,
+          this.memory.getContext(task.conversationId),
+        );
       } catch {
         this.eventBus.publish({ ...lifecycle, type: 'agent.failed' });
         return this.failure();
       }
       switch (outcome.kind) {
         case 'completed':
+          this.memory.appendMessage(task.conversationId, {
+            role: 'assistant',
+            text: outcome.text,
+          });
           this.eventBus.publish({ ...lifecycle, type: 'agent.completed' });
           return {
             kind: 'completed',

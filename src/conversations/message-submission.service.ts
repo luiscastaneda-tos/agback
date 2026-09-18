@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 
 import { TaskQueueService } from '../tasks/task-queue.service';
 import { TaskService } from '../tasks/task.service';
+import { ConversationMemoryStore } from '../memory/conversation-memory.store';
 import { InMemoryConversationStore } from './in-memory-conversation.store';
 
 // Internal projections of frozen contracts/conversation.ts (1.0.0).
@@ -32,6 +33,7 @@ export class MessageSubmissionService {
     private readonly conversations: InMemoryConversationStore,
     private readonly tasks: TaskService,
     private readonly queue: TaskQueueService,
+    private readonly memory: ConversationMemoryStore,
   ) {}
 
   submit(
@@ -74,6 +76,7 @@ export class MessageSubmissionService {
       authContextId,
     }, correlationId);
     this.queue.enqueue(task.id, correlationId);
+    this.memory.appendMessage(conversationId, { role: 'user', text: body.content });
 
     const acceptance: MessageAcceptance = {
       messageId,

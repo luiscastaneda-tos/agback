@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { LlmMessage, LlmProvider } from '../../llm/llm-provider';
+import type { RememberedHotelSearch } from '../../memory/conversation-memory';
 import type { AgentRuntime, ToolContext, ToolOutcome } from '../../tools/agent-runtime';
 import { ToolInvocationFailure } from '../../tools/agent-runtime';
 import type { ToolHandle } from '../../tools/tool-handle';
@@ -28,6 +29,10 @@ const assistantOutputSchema = z.object({
   })).max(MAX_CALLS_PER_ITERATION),
 });
 
+const searchArgsSchema = z.object({
+  destination: z.string().min(1),
+});
+
 // Internal projection of the mock response, deliberately excluding extra fields.
 const searchResultSchema = z.object({
   mock: z.literal(true),
@@ -42,7 +47,7 @@ const searchResultSchema = z.object({
 });
 
 export type HotelSearchAgentOutcome =
-  | { kind: 'completed'; text: string }
+  | { kind: 'completed'; text: string; hotelSearch?: RememberedHotelSearch }
   | { kind: 'stopped'; outcome: Exclude<ToolOutcome, { kind: 'completed' }> }
   | { kind: 'failed'; code:
       | 'INVALID_INPUT'
@@ -87,6 +92,7 @@ export class HotelSearchAgent {
       { role: 'user', text: goal },
     ];
     const usedCallIds = new Set<string>();
+    let lastHotelSearch: RememberedHotelSearch | undefined;
 
     for (let iteration = 0; iteration < MAX_ITERATIONS; iteration += 1) {
       let rawOutput: unknown;
@@ -124,7 +130,11 @@ export class HotelSearchAgent {
       }
       if (output.toolCalls.length === 0) {
         return output.text.trim()
-          ? { kind: 'completed', text: output.text }
+          ? {
+              kind: 'completed',
+              text: output.text,
+              ...(lastHotelSearch === undefined ? {} : { hotelSearch: lastHotelSearch }),
+            }
           : { kind: 'failed', code: 'MALFORMED_OUTPUT' };
       }
 
@@ -154,6 +164,21 @@ export class HotelSearchAgent {
               if (!result.success) {
                 return { kind: 'failed', code: 'INVALID_SEARCH_RESULT' };
               }
+              const searchArgs = searchArgsSchema.safeParse(call.arguments);
+              lastHotelSearch = {
+                destination: searchArgs.success
+                  ? searchArgs.data.destination
+                  : result.data.hotels[0]?.destination ?? goal,
+                criteria: goal,
+                hotels: result.data.hotels.map((hotel) => ({
+                  id: hotel.id,
+                  name: hotel.name,
+                  destination: hotel.destination,
+                  ...(hotel.price !== undefined ? { price: hotel.price } : {}),
+                  ...(hotel.currency !== undefined ? { currency: hotel.currency } : {}),
+                  ...(hotel.description !== undefined ? { description: hotel.description } : {}),
+                })),
+              };
               messages.push({
                 role: 'tool',
                 toolCallId: call.id,

@@ -9,6 +9,8 @@ import { EventBusService } from './events/event-bus.service';
 import { EventModule } from './events/event.module';
 import { createDemoProviderRegistry } from './llm/create-demo-provider-registry';
 import type { LlmProvider } from './llm/llm-provider';
+import { ConversationMemoryModule } from './memory/conversation-memory.module';
+import { ConversationMemoryStore } from './memory/conversation-memory.store';
 import { HotelSearchTaskProcessor } from './tasks/hotel-search-task-processor';
 import { SupervisorTaskProcessor } from './tasks/supervisor-task-processor';
 import { TaskDelegationService } from './tasks/task-delegation.service';
@@ -19,7 +21,7 @@ import { ToolRegistry } from './tools/tool-registry';
 import { ToolModule } from './tools/tool.module';
 
 @Module({
-  imports: [TaskModule, AgentRegistryModule, ToolModule, EventModule],
+  imports: [TaskModule, AgentRegistryModule, ToolModule, EventModule, ConversationMemoryModule],
 })
 export class AgentRuntimeModule implements OnModuleInit {
   constructor(
@@ -29,6 +31,7 @@ export class AgentRuntimeModule implements OnModuleInit {
     private readonly tools: ToolRegistry,
     private readonly invoker: ToolInvoker,
     private readonly eventBus: EventBusService,
+    private readonly memory: ConversationMemoryStore,
   ) {}
 
   onModuleInit(): void {
@@ -67,11 +70,11 @@ export class AgentRuntimeModule implements OnModuleInit {
     this.agents.register(hotelSearch.descriptor);
     this.processors.register(
       supervisor.descriptor.name,
-      new SupervisorTaskProcessor(supervisor, this.delegation, this.eventBus),
+      new SupervisorTaskProcessor(supervisor, this.delegation, this.eventBus, this.memory),
     );
     this.processors.register(
       hotelSearch.descriptor.name,
-      new HotelSearchTaskProcessor(hotelSearch, this.eventBus),
+      new HotelSearchTaskProcessor(hotelSearch, this.eventBus, this.memory),
     );
   }
 }

@@ -18,6 +18,9 @@ const {
 const {
   OpenAiLlmProvider,
 } = require('../dist/llm/openai-llm-provider.js');
+const {
+  SupervisorTaskProcessor,
+} = require('../dist/tasks/supervisor-task-processor.js');
 
 const inertHandle = (name) => ({
   name,
@@ -207,9 +210,74 @@ async function testDemoShortCircuitAndApprovalFlow() {
   });
 }
 
+async function testApprovedActionReusesStoredArgumentsWithoutLlm() {
+  const approvedArguments = {
+    hotelId: 'hotel-1',
+    hotelName: 'Hotel Mar',
+    checkIn: '2026-10-10',
+    checkOut: '2026-10-12',
+    travelerId: 'traveler-1',
+    travelerName: 'Ana',
+    rooms: 1,
+    totalPrice: 6400,
+    currency: 'MXN',
+  };
+  let providerCalls = 0;
+  let executedArguments;
+  const supervisor = new SupervisorAgent(
+    { async generate() { providerCalls += 1; throw new Error('LLM must not run on resume.'); } },
+    'test-model',
+    inertHandle('add_reservation_to_cart'),
+    inertHandle('confirm_booking'),
+    inertHandle('cancel_booking'),
+    {
+      async invoke(name, args, context) {
+        assert.equal(name, 'add_reservation_to_cart');
+        assert.equal(context.approvalId, 'approval-1');
+        executedArguments = args;
+        return { kind: 'completed', data: {
+          mock: true, cartItemId: 'cart-item-approved', status: 'added',
+        } };
+      },
+    },
+  );
+  const processor = new SupervisorTaskProcessor(
+    supervisor,
+    { delegateHotelSearch() { throw new Error('No delegation expected.'); } },
+    { publish() {} },
+    new ConversationMemoryStore(),
+    {
+      findById() {
+        return {
+          id: 'approval-1',
+          taskId: 'task-approved',
+          conversationId: 'conversation-approved',
+          action: 'add_reservation_to_cart',
+          status: 'approved',
+          validatedArguments: approvedArguments,
+        };
+      },
+    },
+  );
+  const outcome = await processor.process({
+    id: 'task-approved',
+    conversationId: 'conversation-approved',
+    agentName: 'SupervisorAgent',
+    status: 'running',
+    goal: 'agrégalo al carrito',
+    activeApprovalId: 'approval-1',
+  }, { correlationId: 'correlation-approved' });
+
+  assert.equal(providerCalls, 0);
+  assert.deepEqual(executedArguments, approvedArguments);
+  assert.equal(outcome.kind, 'completed');
+  assert.equal(outcome.result.summary, 'Fictional mock reservation added to the cart after owner approval.');
+}
+
 await testGroundedSupervisorContext();
 await testCapturedHotelSearchIsStored();
 await testDemoShortCircuitAndApprovalFlow();
+await testApprovedActionReusesStoredArgumentsWithoutLlm();
 testIsolationAndBounds();
 
 console.log('conversation memory tests passed');

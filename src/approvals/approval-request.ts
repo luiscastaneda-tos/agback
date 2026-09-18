@@ -24,6 +24,8 @@ export interface ApprovalRequest {
   inputPreview: ApprovalPreviewField[];
   /** Existing material payload hash, bound to this action, conversation and task. */
   payloadHash: string;
+  /** Internal-only validated arguments. Explicit HTTP projections must omit this field. */
+  validatedArguments: unknown;
   createdAt: string;
   expiresAt: string;
   resolvedAt?: string;
@@ -41,6 +43,8 @@ export interface CreateApprovalRequestInput {
   /** Per-action allowlist preview, never raw arguments or credentials. */
   inputPreview: readonly ApprovalPreviewField[];
   payloadHash: string;
+  /** Exact schema-validated arguments shown for approval; never exposed over HTTP/SSE. */
+  validatedArguments: unknown;
 }
 
 /** Internal outcome; replacement requires the caller to pause for approval. */

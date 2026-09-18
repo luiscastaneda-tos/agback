@@ -19,7 +19,7 @@ export class ConversationApprovalsController {
   list(
     @Param('id') conversationId: string,
     @Req() request: AuthenticatedRequest,
-  ): ApprovalRequest[] {
+  ): Array<Omit<ApprovalRequest, 'validatedArguments'>> {
     const identity = request[REQUEST_AUTH];
     if (!identity) {
       throw this.error(401, 'AUTHENTICATION_FAILED', 'Authentication failed.');

@@ -60,6 +60,7 @@ export class InMemoryApprovalStore {
         ...(field.emphasis === undefined ? {} : { emphasis: field.emphasis }),
       })),
       payloadHash: input.payloadHash,
+      validatedArguments: structuredClone(input.validatedArguments),
       createdAt: new Date(now).toISOString(),
       expiresAt: expiresAt.toISOString(),
     };

@@ -1,5 +1,6 @@
 import type { SupervisorAgent, SupervisorAgentOutcome } from '../agents/supervisor/supervisor.agent';
 import type { EventBusService } from '../events/event-bus.service';
+import type { InMemoryApprovalStore } from '../approvals/in-memory-approval.store';
 import type { ConversationMemoryStore } from '../memory/conversation-memory.store';
 import type { ToolContext } from '../tools/agent-runtime';
 import type { AgentTask } from './agent-task';
@@ -16,6 +17,7 @@ export class SupervisorTaskProcessor implements TaskProcessor {
     private readonly delegation: TaskDelegationService,
     private readonly eventBus: EventBusService,
     private readonly memory: ConversationMemoryStore,
+    private readonly approvals: InMemoryApprovalStore,
   ) {}
 
   async process(
@@ -51,11 +53,22 @@ export class SupervisorTaskProcessor implements TaskProcessor {
       let outcome: SupervisorAgentOutcome;
       this.eventBus.publish({ ...lifecycle, type: 'agent.started' });
       try {
-        outcome = await this.supervisor.run(
-          task.goal,
-          toolContext,
-          this.memory.getContext(task.conversationId),
-        );
+        const approval = task.activeApprovalId === undefined
+          ? undefined
+          : this.approvals.findById(task.activeApprovalId);
+        outcome = approval?.status === 'approved' &&
+          approval.taskId === task.id &&
+          approval.conversationId === task.conversationId
+          ? await this.supervisor.runApprovedAction(
+            approval.action,
+            approval.validatedArguments,
+            toolContext,
+          )
+          : await this.supervisor.run(
+            task.goal,
+            toolContext,
+            this.memory.getContext(task.conversationId),
+          );
       } catch {
         this.eventBus.publish({ ...lifecycle, type: 'agent.failed' });
         return this.failure();

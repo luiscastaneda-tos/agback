@@ -4,6 +4,7 @@ import { HotelSearchAgent } from './agents/hotel-search/hotel-search.agent';
 import { AgentRegistryModule } from './agents/registry/agent-registry.module';
 import { AgentRegistryService } from './agents/registry/agent-registry.service';
 import { SupervisorAgent } from './agents/supervisor/supervisor.agent';
+import { ApprovalModule } from './approvals/approval.module';
 import { loadRuntimeConfig } from './config/runtime-config';
 import { EventBusService } from './events/event-bus.service';
 import { EventModule } from './events/event.module';
@@ -19,9 +20,10 @@ import { TaskModule } from './tasks/task.module';
 import { ToolInvoker } from './tools/tool-invoker';
 import { ToolRegistry } from './tools/tool-registry';
 import { ToolModule } from './tools/tool.module';
+import { InMemoryApprovalStore } from './approvals/in-memory-approval.store';
 
 @Module({
-  imports: [TaskModule, AgentRegistryModule, ToolModule, EventModule, ConversationMemoryModule],
+  imports: [TaskModule, AgentRegistryModule, ToolModule, EventModule, ConversationMemoryModule, ApprovalModule],
 })
 export class AgentRuntimeModule implements OnModuleInit {
   constructor(
@@ -32,6 +34,7 @@ export class AgentRuntimeModule implements OnModuleInit {
     private readonly invoker: ToolInvoker,
     private readonly eventBus: EventBusService,
     private readonly memory: ConversationMemoryStore,
+    private readonly approvals: InMemoryApprovalStore,
   ) {}
 
   onModuleInit(): void {
@@ -70,7 +73,9 @@ export class AgentRuntimeModule implements OnModuleInit {
     this.agents.register(hotelSearch.descriptor);
     this.processors.register(
       supervisor.descriptor.name,
-      new SupervisorTaskProcessor(supervisor, this.delegation, this.eventBus, this.memory),
+      new SupervisorTaskProcessor(
+        supervisor, this.delegation, this.eventBus, this.memory, this.approvals,
+      ),
     );
     this.processors.register(
       hotelSearch.descriptor.name,

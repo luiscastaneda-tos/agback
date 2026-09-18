@@ -184,59 +184,7 @@ export class SupervisorAgent {
           : { kind: 'failed', code: 'MALFORMED_OUTPUT' };
       }
       if (call.name === CART_TOOL || call.name === CONFIRM_TOOL || call.name === CANCEL_TOOL) {
-        try {
-          const outcome = await this.runtime.invoke(call.name, call.arguments, context);
-          switch (outcome.kind) {
-            case 'awaiting_approval':
-            case 'rejected':
-            case 'forbidden':
-              return { kind: 'stopped', outcome };
-            case 'completed': {
-              if (call.name === CANCEL_TOOL) {
-                const result = cancellationResultSchema.safeParse(outcome.data);
-                if (!result.success) return { kind: 'failed', code: 'TOOL_FAILED' };
-                return {
-                  kind: 'cancellation_completed',
-                  data: {
-                    mock: result.data.mock,
-                    bookingId: result.data.bookingId,
-                    status: result.data.status,
-                  },
-                };
-              }
-              if (call.name === CONFIRM_TOOL) {
-                const result = confirmationResultSchema.safeParse(outcome.data);
-                if (!result.success) return { kind: 'failed', code: 'TOOL_FAILED' };
-                return {
-                  kind: 'confirmation_completed',
-                  data: {
-                    mock: result.data.mock,
-                    bookingId: result.data.bookingId,
-                    status: result.data.status,
-                  },
-                };
-              }
-              const result = cartResultSchema.safeParse(outcome.data);
-              if (!result.success) return { kind: 'failed', code: 'TOOL_FAILED' };
-              return {
-                kind: 'cart_completed',
-                data: {
-                  mock: result.data.mock,
-                  cartItemId: result.data.cartItemId,
-                  status: result.data.status,
-                },
-              };
-            }
-            default:
-              return { kind: 'failed', code: 'TOOL_FAILED' };
-          }
-        } catch (error) {
-          return {
-            kind: 'failed',
-            code: error instanceof ToolInvocationFailure && error.code === 'AUTH_CONTEXT_EXPIRED'
-              ? 'AUTH_CONTEXT_EXPIRED' : 'TOOL_FAILED',
-          };
-        }
+        return this.invokeAction(call.name, call.arguments, context);
       }
       if (call.name !== DELEGATION_INTENT) {
         return { kind: 'failed', code: 'TOOL_NOT_ALLOWED' };
@@ -252,6 +200,55 @@ export class SupervisorAgent {
       };
     } catch {
       return { kind: 'failed', code: 'MALFORMED_OUTPUT' };
+    }
+  }
+
+  /** Resumes the exact action that was approved without another model generation. */
+  async runApprovedAction(
+    toolName: string,
+    args: unknown,
+    context: ToolContext,
+  ): Promise<SupervisorAgentOutcome> {
+    if (toolName !== CART_TOOL && toolName !== CONFIRM_TOOL && toolName !== CANCEL_TOOL) {
+      return { kind: 'failed', code: 'TOOL_NOT_ALLOWED' };
+    }
+    return this.invokeAction(toolName, args, context);
+  }
+
+  private async invokeAction(
+    toolName: typeof CART_TOOL | typeof CONFIRM_TOOL | typeof CANCEL_TOOL,
+    args: unknown,
+    context: ToolContext,
+  ): Promise<SupervisorAgentOutcome> {
+    try {
+      const outcome = await this.runtime.invoke(toolName, args, context);
+      switch (outcome.kind) {
+        case 'awaiting_approval':
+        case 'rejected':
+        case 'forbidden':
+          return { kind: 'stopped', outcome };
+        case 'completed': {
+          if (toolName === CANCEL_TOOL) {
+            const result = cancellationResultSchema.safeParse(outcome.data);
+            if (!result.success) return { kind: 'failed', code: 'TOOL_FAILED' };
+            return { kind: 'cancellation_completed', data: result.data };
+          }
+          if (toolName === CONFIRM_TOOL) {
+            const result = confirmationResultSchema.safeParse(outcome.data);
+            if (!result.success) return { kind: 'failed', code: 'TOOL_FAILED' };
+            return { kind: 'confirmation_completed', data: result.data };
+          }
+          const result = cartResultSchema.safeParse(outcome.data);
+          if (!result.success) return { kind: 'failed', code: 'TOOL_FAILED' };
+          return { kind: 'cart_completed', data: result.data };
+        }
+      }
+    } catch (error) {
+      return {
+        kind: 'failed',
+        code: error instanceof ToolInvocationFailure && error.code === 'AUTH_CONTEXT_EXPIRED'
+          ? 'AUTH_CONTEXT_EXPIRED' : 'TOOL_FAILED',
+      };
     }
   }
 }

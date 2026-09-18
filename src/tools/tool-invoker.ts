@@ -102,6 +102,7 @@ export class ToolInvoker implements AgentRuntime {
         summary: definition.description,
         inputPreview: definition.toPreview(parsed.data),
         payloadHash: hash,
+        validatedArguments: structuredClone(parsed.data),
       });
       if (ctx.approvalId === undefined) {
         const approval = this.approvals.create(requestInput());

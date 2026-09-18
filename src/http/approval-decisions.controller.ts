@@ -17,7 +17,7 @@ export class ApprovalDecisionsController {
     @Param('id') approvalId: string,
     @Req() request: AuthenticatedRequest,
     @Body() decision: unknown,
-  ): ApprovalRequest {
+  ): Omit<ApprovalRequest, 'validatedArguments'> {
     try {
       const identity = request[REQUEST_AUTH];
       if (!identity) throw new AuthenticationFailure();
